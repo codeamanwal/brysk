@@ -1,37 +1,40 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import the Navigate function from the appropriate module
 
-
-export default function Login() {
-  const navigate = useNavigate(); // Call the Navigate function
+export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleLogin = async (event) => {
-    event.preventDefault();
-    setMessage("");
+  const handleSignup = async (event) => {
+    // event.preventDefault();
+    // setMessage("");
 
-    const response = await fetch(
-      "https://as-api.bryskpaasdev.com/api/sign_in",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      }
-    );
+    // if (password !== confirmPassword) {
+    //   setMessage("Passwords do not match.");
+    //   return;
+    // }
 
-    if (response.ok) {
-      const data = await response.json();
-      setMessage("Login successful!");
-      navigate('/dashboard')
-    } else {
-      const errorData = await response.json();
-      setMessage(errorData.error || "Login failed. Please try again.");
-    }
+    // const response = await fetch(
+    //   "https://as-api.bryskpaasdev.com/api/sign_up",
+    //   {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({ email, password }),
+    //   }
+    // );
+
+    // if (response.ok) {
+    //   const data = await response.json();
+    //   setMessage("Signup successful!");
+    // } else {
+    //   const errorData = await response.json();
+    //   setMessage(errorData.error || "Signup failed. Please try again.");
+    // }
   };
+
   return (
     <>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-gray-800">
@@ -42,13 +45,13 @@ export default function Login() {
             alt="Your Company"
           />
           <h2 className="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-white">
-            Sign in to your account
+            Create your account
           </h2>
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
           <div className="bg-white px-6 py-12 shadow rounded-lg sm:rounded-lg sm:px-12">
-            <form className="space-y-6" action="#" method="POST" onSubmit={handleLogin}>
+            <form className="space-y-6" action="#" method="POST" onSubmit={handleSignup}>
               <div>
                 <label
                   htmlFor="email"
@@ -81,7 +84,7 @@ export default function Login() {
                     id="password"
                     name="password"
                     type="password"
-                    autoComplete="current-password"
+                    autoComplete="new-password"
                     required
                     onChange={(e) => setPassword(e.target.value)}
                     className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-600 sm:text-sm sm:leading-6"
@@ -89,29 +92,23 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium leading-6 text-gray-900"
+                >
+                  Confirm Password
+                </label>
+                <div className="mt-2">
                   <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-gray-600 focus:ring-gray-600"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-600 sm:text-sm sm:leading-6"
                   />
-                  <label
-                    htmlFor="remember-me"
-                    className="ml-3 block text-sm leading-6 text-gray-900"
-                  >
-                    Remember me
-                  </label>
-                </div>
-
-                <div className="text-sm leading-6">
-                  <a
-                    href="#"
-                    className="font-semibold text-gray-800 hover:text-gray-500"
-                  >
-                    Forgot password?
-                  </a>
                 </div>
               </div>
 
@@ -120,24 +117,24 @@ export default function Login() {
                   type="submit"
                   className="flex w-full justify-center rounded-md bg-gray-800 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
-                  Sign in
+                  Sign up
                 </button>
               </div>
             </form>
             {message && (
-                <div className={`mt-4 text-center ${message === 'Login successful!' ? 'text-green-600' : 'text-red-600'}`}>
+                <div className={`mt-4 text-center ${message === 'Signup successful!' ? 'text-green-600' : 'text-red-600'}`}>
                   {message}
                 </div>
               )}
           </div>
 
           <p className="mt-10 text-center text-sm text-gray-500">
-            Not a member?{" "}
+            Already a member?{" "}
             <a
-              href="/signup"
+              href="/"
               className="font-semibold leading-6 text-white hover:text-gray-500"
             >
-              Sign Up
+              Sign In
             </a>
           </p>
         </div>

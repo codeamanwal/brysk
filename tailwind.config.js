@@ -1,11 +1,16 @@
 module.exports = {
-  content: [
-    './src/**/*.{html,js,jsx,ts,tsx}', // Adjust the paths according to your project structure
-  ],
+  content: ["./src/**/*.{html,js,jsx}"],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'primary': '#ff6347',
+        'secondary': '#4b5563',
+        'accent': '#f59e0b',
+        'muted': '#6b7280',
+        'brysk': '#fcd34d',
+        'hover': '#fef3c7'
+      }
+    }
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-  ],
-};
+  plugins: [],
+}
