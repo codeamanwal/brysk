@@ -106,6 +106,10 @@ app.get("/location-inventories", async (req, res) => {
   }
 });
 
+app.get("/", async(req, res) => {
+  res.send("Welcome!");
+})
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
