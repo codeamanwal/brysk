@@ -9,7 +9,7 @@ const poolAdmin = new Pool({
     password: process.env.ADMIN_PGPASSWORD,
     database: process.env.ADMIN_PGDATABASE,
     port: process.env.ADMIN_PGPORT,
-  });
+});
 
 // Endpoint for sales per location by day
 router.get('/salesperlocation/day', async (req, res) => {

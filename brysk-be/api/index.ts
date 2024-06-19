@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors"); // Import the cors middleware
 const { Pool } = require("pg");
 require("dotenv").config();
-const salesRoutes = require('./src/api/sales');
+const salesRoutes = require('./sales.js');
 
 const app = express();
 const port = process.env.PORT || 5001;
