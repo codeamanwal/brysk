@@ -3,11 +3,15 @@ import Sidebar from "../components/Sidebar";
 import SearchBar from "../components/SearchBar";
 import axios from "axios";
 import { useTable, usePagination } from "react-table";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
+import { ThreeDots } from "react-loader-spinner";
+import SalesBarChart from "../components/charts/SalesBarChart";
+import SalesLineChart from "../components/charts/SalesLineChart";
 
 const SalesPerLocation = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [view, setView] = useState("table");
   const [timePeriod, setTimePeriod] = useState("day");
   const [dataType, setDataType] = useState("total");
@@ -16,7 +20,8 @@ const SalesPerLocation = () => {
     fetchData();
   }, [timePeriod, dataType]);
 
-  const fetchData = () => {
+  const fetchData = async () => {
+    setLoading(true);
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation`;
     switch (dataType) {
       case "total":
@@ -59,16 +64,16 @@ const SalesPerLocation = () => {
         break;
     }
 
-    axios
-      .get(endpoint)
-      .then((response) => {
-        setData(response.data);
-        console.log(response.data);
-      })
-      .catch((error) => {
-        setError(error);
-        console.error(error);
-      });
+    try {
+      const response = await axios.get(endpoint);
+      setData(response.data);
+      console.log(response.data);
+    } catch (error) {
+      setError(error);
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const generateColumns = () => {
@@ -88,7 +93,7 @@ const SalesPerLocation = () => {
         columns.splice(1, 0, {
           Header: "Sale Day",
           accessor: "sale_day",
-          Cell: ({ value }) => format(new Date(value), "yyyy-MM-dd HH:mm:ss"),
+          Cell: ({ value }) => isValid(new Date(value)) ? format(new Date(value), "yyyy-MM-dd HH:mm:ss") : "Invalid Date",
         });
         break;
       case "week":
@@ -106,10 +111,18 @@ const SalesPerLocation = () => {
         );
         break;
       case "month":
-        columns.splice(1, 0, {
-          Header: "Sale Year-Month",
-          accessor: "sale_year_month",
-        });
+        columns.splice(
+          1,
+          0,
+          {
+            Header: "Sale Year",
+            accessor: "sale_year",
+          },
+          {
+            Header: "Sale Month",
+            accessor: "sale_month",
+          }
+        );
         break;
       case "date-range":
         columns = [
@@ -212,7 +225,6 @@ const SalesPerLocation = () => {
                             <option value="day">Day</option>
                             <option value="week">Week</option>
                             <option value="month">Month</option>
-                            <option value="date-range">Date Range</option>
                           </select>
                         </label>
                         <label className="ml-4">
@@ -228,11 +240,24 @@ const SalesPerLocation = () => {
                         </label>
                       </div>
                       {error ? <p>{error.message}</p> : null}
-                      {view === "table" ? (
+                      {loading ? (
+                        <div className="flex justify-center">
+                          <ThreeDots
+                            visible={true}
+                            height="80"
+                            width="80"
+                            color="#000"
+                            radius="9"
+                            ariaLabel="three-dots-loading"
+                            wrapperStyle={{}}
+                            wrapperClass=""
+                          />
+                        </div>
+                      ) : view === "table" ? (
                         <div>
                           <table
                             {...getTableProps()}
-                            className="min-w-full divide-y divide-gray-200 my-5"
+                            className="min-w-full divide-y divide-gray-200 my-5 border"
                           >
                             <thead className="bg-gray-50">
                               {headerGroups.map((headerGroup) => (
@@ -332,8 +357,7 @@ const SalesPerLocation = () => {
                         </div>
                       ) : (
                         <div>
-                          {/* This is where your chart component will go */}
-                          <p>Chart view is currently empty</p>
+                          <SalesBarChart data={data} loading={loading} />
                         </div>
                       )}
                     </div>

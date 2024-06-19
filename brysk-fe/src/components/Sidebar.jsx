@@ -9,8 +9,8 @@ import {
 } from "@heroicons/react/24/outline";
 
 const navigation = [
-  { name: "Sales per Location/Store", href: "/1", icon: HomeIcon },
-  { name: "Sales per Customer", href: "/2", icon: ExclamationCircleIcon },
+  { name: "Sales per Location/Store", href: "/1", icon: XMarkIcon },
+  { name: "Sales per Customer", href: "/2", icon: XMarkIcon },
 ];
 
 function classNames(...classes) {
