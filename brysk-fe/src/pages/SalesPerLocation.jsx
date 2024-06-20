@@ -79,8 +79,8 @@ const SalesPerLocation = () => {
   const generateColumns = () => {
     let columns = [
       {
-        Header: "Location ID",
-        accessor: "locationId",
+        Header: "Location",
+        accessor: "displayName",
       },
       {
         Header: "Total Sales",
@@ -185,7 +185,7 @@ const SalesPerLocation = () => {
   return (
     <div>
       <Sidebar />
-      <div className="lg:pl-64">
+      <div className="lg:pl-72">
         <SearchBar />
         <main className="py-10">
           <div className="px-4 sm:px-6 lg:px-8">

@@ -2,7 +2,7 @@ import React from 'react';
 import Sidebar from '../components/Sidebar';
 import SearchBar from '../components/SearchBar';
 
-const SalesPerCustomer = () => {
+const InventoryDiscrepancy = () => {
   return (
     <div className="flex">
       <Sidebar />
@@ -11,7 +11,7 @@ const SalesPerCustomer = () => {
         <main className="py-10">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto p-5 bg-white rounded-md shadow">
-              <h1>Sales per Customer</h1>
+              <h1>Weight-Based vs. System Inventory Discrepancy</h1>
               {/* Your content goes here */}
             </div>
           </div>
@@ -21,4 +21,4 @@ const SalesPerCustomer = () => {
   );
 };
 
-export default SalesPerCustomer;
+export default InventoryDiscrepancy;

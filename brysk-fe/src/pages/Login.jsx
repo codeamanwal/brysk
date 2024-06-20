@@ -26,7 +26,7 @@ export default function Login() {
     if (response.ok) {
       const data = await response.json();
       setMessage("Login successful!");
-      navigate('/1')
+      navigate('/sales/location-store')
     } else {
       const errorData = await response.json();
       setMessage(errorData.error || "Login failed. Please try again.");
