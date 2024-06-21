@@ -188,12 +188,14 @@ const SalesPerLocation = () => {
           {
             Header: "Start Date",
             accessor: "startDate",
-            Cell: ({ value }) => (value ? format(new Date(value), "yyyy-MM-dd") : "")
+            Cell: ({ value }) =>
+              value ? format(new Date(value), "yyyy-MM-dd") : "",
           },
           {
             Header: "End Date",
             accessor: "endDate",
-            Cell: ({ value }) => (value ? format(new Date(value), "yyyy-MM-dd") : "")
+            Cell: ({ value }) =>
+              value ? format(new Date(value), "yyyy-MM-dd") : "",
           },
           {
             Header: "Total Sales",
@@ -367,7 +369,7 @@ const SalesPerLocation = () => {
                                 popperPlacement="bottom-start"
                               />
                             </label>
-                            <label className="ml-4">
+                            <label>
                               End Date:
                               <DatePicker
                                 selected={endDate}
@@ -392,7 +394,9 @@ const SalesPerLocation = () => {
                         )}
                       </div>
                       {error ? <p>{error.message}</p> : null}
-                      {loading || (timePeriod === "date-range" && (!startDate || !endDate)) ? (
+                      {loading ||
+                      (timePeriod === "date-range" &&
+                        (!startDate || !endDate)) ? (
                         <div className="flex justify-center">
                           <ThreeDots
                             visible={true}
@@ -461,6 +465,12 @@ const SalesPerLocation = () => {
                             >
                               {"<"}
                             </button>{" "}
+                            <span>
+                              Page{" "}
+                              <strong>
+                                {pageIndex + 1} of {pageOptions.length}
+                              </strong>{" "}
+                            </span>
                             <button
                               onClick={() => nextPage()}
                               disabled={!canNextPage}
@@ -473,12 +483,6 @@ const SalesPerLocation = () => {
                             >
                               {">>"}
                             </button>{" "}
-                            <span>
-                              Page{" "}
-                              <strong>
-                                {pageIndex + 1} of {pageOptions.length}
-                              </strong>{" "}
-                            </span>
                             <span>
                               | Go to page:{" "}
                               <input
