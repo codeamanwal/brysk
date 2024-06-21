@@ -1,28 +1,51 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import SearchBar from "../components/SearchBar";
+import CityFilter from "../components/CityFilter";
 import axios from "axios";
 import { useTable, usePagination } from "react-table";
 import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
 import SalesBarChart from "../components/charts/SalesBarChart";
-import SalesLineChart from "../components/charts/SalesLineChart";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { DocumentArrowDownIcon } from "@heroicons/react/24/solid";
+import { Tooltip } from "react-tooltip";
 
 const SalesPerLocation = () => {
   const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("table");
   const [timePeriod, setTimePeriod] = useState("day");
   const [dataType, setDataType] = useState("total");
+  const [cityId, setCityId] = useState("");
+  const [locations, setLocations] = useState([]);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
   useEffect(() => {
     fetchData();
+    fetchLocations();
   }, [timePeriod, dataType]);
 
+  useEffect(() => {
+    filterDataByCity(cityId);
+  }, [data, cityId]);
+
   const fetchData = async () => {
+    if (timePeriod === "date-range" && (!startDate || !endDate)) {
+      return;
+    }
+
     setLoading(true);
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation`;
+    const startDateString = startDate
+      ? startDate.toISOString().split("T")[0]
+      : "";
+    const endDateString = endDate ? endDate.toISOString().split("T")[0] : "";
+
     switch (dataType) {
       case "total":
         switch (timePeriod) {
@@ -36,7 +59,7 @@ const SalesPerLocation = () => {
             endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation/month`;
             break;
           case "date-range":
-            endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation/daterange?start_date=2023-01-01&end_date=2023-01-31`;
+            endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation/daterange?start_date=${startDateString}&end_date=${endDateString}`;
             break;
           default:
             break;
@@ -54,7 +77,7 @@ const SalesPerLocation = () => {
             endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation/sku/month`;
             break;
           case "date-range":
-            endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation/sku/daterange?start_date=2023-01-01&end_date=2023-01-31`;
+            endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation/sku/daterange?start_date=${startDateString}&end_date=${endDateString}`;
             break;
           default:
             break;
@@ -67,6 +90,7 @@ const SalesPerLocation = () => {
     try {
       const response = await axios.get(endpoint);
       setData(response.data);
+      setFilteredData(response.data);
       console.log(response.data);
     } catch (error) {
       setError(error);
@@ -74,6 +98,34 @@ const SalesPerLocation = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchLocations = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/locations`
+      );
+      setLocations(response.data);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+    }
+  };
+
+  const filterDataByCity = (cityId) => {
+    if (!cityId) {
+      setFilteredData(data);
+    } else {
+      const filtered = data.filter((item) => {
+        const location = locations.find((loc) => loc.id === item.locationId);
+        return location && location.cityId === cityId;
+      });
+      setFilteredData(filtered);
+    }
+  };
+
+  const handleCityChange = (newCityId) => {
+    setCityId(newCityId);
+    filterDataByCity(newCityId);
   };
 
   const generateColumns = () => {
@@ -93,7 +145,10 @@ const SalesPerLocation = () => {
         columns.splice(1, 0, {
           Header: "Sale Day",
           accessor: "sale_day",
-          Cell: ({ value }) => isValid(new Date(value)) ? format(new Date(value), "yyyy-MM-dd HH:mm:ss") : "Invalid Date",
+          Cell: ({ value }) =>
+            isValid(new Date(value))
+              ? format(new Date(value), "yyyy-MM-dd HH:mm:ss")
+              : "Invalid Date",
         });
         break;
       case "week":
@@ -127,8 +182,18 @@ const SalesPerLocation = () => {
       case "date-range":
         columns = [
           {
-            Header: "Location ID",
-            accessor: "locationId",
+            Header: "Location",
+            accessor: "displayName",
+          },
+          {
+            Header: "Start Date",
+            accessor: "startDate",
+            Cell: ({ value }) => (value ? format(new Date(value), "yyyy-MM-dd") : "")
+          },
+          {
+            Header: "End Date",
+            accessor: "endDate",
+            Cell: ({ value }) => (value ? format(new Date(value), "yyyy-MM-dd") : "")
           },
           {
             Header: "Total Sales",
@@ -176,39 +241,85 @@ const SalesPerLocation = () => {
   } = useTable(
     {
       columns,
-      data,
+      data: filteredData,
       initialState: { pageIndex: 0 },
     },
     usePagination
   );
 
+  const downloadCSV = () => {
+    const csvRows = [];
+    const headers = columns.map((col) => col.Header);
+    csvRows.push(headers.join(","));
+
+    filteredData.forEach((row) => {
+      const values = columns.map((col) => {
+        const value = row[col.accessor];
+        return `"${value !== undefined ? value : ""}"`;
+      });
+      csvRows.push(values.join(","));
+    });
+
+    const csvContent = csvRows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "sales_data.csv");
+    a.click();
+  };
+
   return (
     <div>
       <Sidebar />
       <div className="lg:pl-72">
-        <SearchBar />
         <main className="py-10">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto p-5 bg-white rounded-md shadow">
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className={`rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm ${
-                    view === "table" ? "bg-gray-800" : "bg-gray-500"
-                  }`}
-                  onClick={() => setView("table")}
-                >
-                  Tables
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm ${
-                    view === "chart" ? "bg-gray-800" : "bg-gray-500"
-                  }`}
-                  onClick={() => setView("chart")}
-                >
-                  Chart
-                </button>
+              <div className="border-b border-gray-200 pb-5 sm:flex sm:items-center sm:justify-between">
+                <h2 className="text-xl font-bold leading-6 text-gray-900">
+                  Sales Per Location/Store
+                </h2>
+                <div className="mt-3 flex sm:ml-4 sm:mt-0">
+                  <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-500 ${
+                      view === "table"
+                        ? "bg-gray-800 text-white"
+                        : "bg-white text-gray-900"
+                    }`}
+                    onClick={() => setView("table")}
+                  >
+                    Tables
+                  </button>
+                  <button
+                    type="button"
+                    className={`ml-3 inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-500 ${
+                      view === "chart"
+                        ? "bg-gray-800 text-white"
+                        : "bg-white text-gray-900"
+                    }`}
+                    onClick={() => setView("chart")}
+                  >
+                    Chart
+                  </button>
+                  <div
+                    className="relative flex items-center cursor-pointer"
+                    onClick={downloadCSV}
+                  >
+                    <DocumentArrowDownIcon
+                      className="ml-4 h-8 w-8 text-blue-500"
+                      data-tooltip-id="csv-tooltip"
+                      data-tooltip-content="Download CSV"
+                    />
+                    <Tooltip
+                      id="csv-tooltip"
+                      place="top"
+                      type="dark"
+                      effect="solid"
+                    />
+                  </div>
+                </div>
               </div>
               <div className="px-4 sm:px-6 lg:px-8">
                 <div className="flow-root">
@@ -225,6 +336,7 @@ const SalesPerLocation = () => {
                             <option value="day">Day</option>
                             <option value="week">Week</option>
                             <option value="month">Month</option>
+                            <option value="date-range">Date Range</option>
                           </select>
                         </label>
                         <label className="ml-4">
@@ -238,9 +350,49 @@ const SalesPerLocation = () => {
                             <option value="sku">SKU wise</option>
                           </select>
                         </label>
+
+                        <CityFilter onCityChange={handleCityChange} />
+
+                        {timePeriod === "date-range" && (
+                          <div className="mt-4">
+                            <label>
+                              Start Date:
+                              <DatePicker
+                                selected={startDate}
+                                onChange={(date) => setStartDate(date)}
+                                selectsStart
+                                startDate={startDate}
+                                endDate={endDate}
+                                className="p-1 border"
+                                popperPlacement="bottom-start"
+                              />
+                            </label>
+                            <label className="ml-4">
+                              End Date:
+                              <DatePicker
+                                selected={endDate}
+                                onChange={(date) => setEndDate(date)}
+                                selectsEnd
+                                startDate={startDate}
+                                endDate={endDate}
+                                minDate={startDate}
+                                className="p-1 border"
+                                popperPlacement="bottom-start"
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"
+                              onClick={fetchData}
+                              disabled={!startDate || !endDate}
+                            >
+                              Fetch Data
+                            </button>
+                          </div>
+                        )}
                       </div>
                       {error ? <p>{error.message}</p> : null}
-                      {loading ? (
+                      {loading || (timePeriod === "date-range" && (!startDate || !endDate)) ? (
                         <div className="flex justify-center">
                           <ThreeDots
                             visible={true}
@@ -357,7 +509,7 @@ const SalesPerLocation = () => {
                         </div>
                       ) : (
                         <div>
-                          <SalesBarChart data={data} loading={loading} />
+                          <p>No Chart</p>
                         </div>
                       )}
                     </div>

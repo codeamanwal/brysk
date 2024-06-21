@@ -1,60 +1,105 @@
-const express = require('express');
-const { Pool } = require('pg');
+const express = require("express");
+const { Pool } = require("pg");
 const router = express.Router();
 
 // PostgreSQL connection pool for oh-customer-api
 const poolCustomer = new Pool({
-    host: process.env.ADMIN_PGHOST,
-    user: process.env.ADMIN_PGUSER,
-    password: process.env.ADMIN_PGPASSWORD,
-    database: 'oh-customer-api',
-    port: process.env.ADMIN_PGPORT,
+  host: process.env.ADMIN_PGHOST,
+  user: process.env.ADMIN_PGUSER,
+  password: process.env.ADMIN_PGPASSWORD,
+  database: "oh-customer-api",
+  port: process.env.ADMIN_PGPORT,
 });
 
 // PostgreSQL connection pool for oh-admin-api
 const poolAdmin = new Pool({
-    host: process.env.ADMIN_PGHOST,
-    user: process.env.ADMIN_PGUSER,
-    password: process.env.ADMIN_PGPASSWORD,
-    database: 'oh-admin-api',
-    port: process.env.ADMIN_PGPORT,
+  host: process.env.ADMIN_PGHOST,
+  user: process.env.ADMIN_PGUSER,
+  password: process.env.ADMIN_PGPASSWORD,
+  database: "oh-admin-api",
+  port: process.env.ADMIN_PGPORT,
 });
 
-// Function to get display names for locations
-const getLocationDisplayNames = async () => {
+// Function to get display names for locations with city information
+const getLocationsWithCities = async () => {
   const result = await poolAdmin.query(`
-    SELECT id, "displayName"
-    FROM public."Locations"
+    SELECT
+      L.id,
+      L."displayName",
+      L."cityId",
+      C.name as cityName
+    FROM public."Locations" L
+    JOIN public."Cities" C ON L."cityId" = C.id;
   `);
-  const locations = {};
-  result.rows.forEach(row => {
-    locations[row.id] = row.displayName;
-  });
-  return locations;
+  return result.rows;
 };
 
-// Middleware to fetch and attach location display names
+// Middleware to fetch and attach location display names and city info
 router.use(async (req, res, next) => {
   try {
-    req.locationNames = await getLocationDisplayNames();
+    req.locations = await getLocationsWithCities();
     next();
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Helper function to enrich results with display names and sort them
-const enrichWithDisplayNamesAndSort = (rows, locationNames) => {
-  const enrichedRows = rows.map(row => ({
+const enrichWithDisplayNamesAndSort = (rows, locations) => {
+  const locationMap = {};
+  locations.forEach((location) => {
+    locationMap[location.id] = location;
+  });
+
+  const enrichedRows = rows.map((row) => ({
     ...row,
-    displayName: locationNames[row.locationId] || 'Unknown'
+    displayName: locationMap[row.locationId]
+      ? locationMap[row.locationId].displayName
+      : "Unknown",
+    cityName: locationMap[row.locationId]
+      ? locationMap[row.locationId].cityName
+      : "Unknown",
   }));
-  return enrichedRows.sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+  return enrichedRows.sort((a, b) =>
+    a.displayName.localeCompare(b.displayName)
+  );
 };
 
+router.get("/locations", async (req, res) => {
+  try {
+    const result = await poolAdmin.query(`
+      SELECT
+        L.id,
+        L."displayName",
+        L."cityId",
+        C.name as cityName
+      FROM public."Locations" L
+      JOIN public."Cities" C ON L."cityId" = C.id;
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/cities", async (req, res) => {
+  try {
+    const result = await poolAdmin.query(`
+      SELECT id, name
+      FROM public."Cities";
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 // Endpoint for sales per location by day
-router.get('/salesperlocation/day', async (req, res) => {
+router.get("/salesperlocation/day", async (req, res) => {
   try {
     const result = await poolCustomer.query(`
       SELECT
@@ -66,16 +111,19 @@ router.get('/salesperlocation/day', async (req, res) => {
       GROUP BY O."locationId", sale_day
       ORDER BY sale_day;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.locationNames);
+    const enrichedResult = enrichWithDisplayNamesAndSort(
+      result.rows,
+      req.locations
+    );
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Endpoint for sales per location by week
-router.get('/salesperlocation/week', async (req, res) => {
+router.get("/salesperlocation/week", async (req, res) => {
   try {
     const result = await poolCustomer.query(`
       SELECT
@@ -88,16 +136,19 @@ router.get('/salesperlocation/week', async (req, res) => {
       GROUP BY O."locationId", sale_year, sale_week
       ORDER BY sale_year, sale_week;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.locationNames);
+    const enrichedResult = enrichWithDisplayNamesAndSort(
+      result.rows,
+      req.locations
+    );
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Endpoint for sales per location by month
-router.get('/salesperlocation/month', async (req, res) => {
+router.get("/salesperlocation/month", async (req, res) => {
   try {
     const result = await poolCustomer.query(`
       SELECT
@@ -110,36 +161,45 @@ router.get('/salesperlocation/month', async (req, res) => {
       GROUP BY O."locationId", sale_year, sale_month
       ORDER BY sale_year, sale_month;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.locationNames);
+    const enrichedResult = enrichWithDisplayNamesAndSort(
+      result.rows,
+      req.locations
+    );
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Endpoint for sales per location by date range
-router.get('/salesperlocation/daterange', async (req, res) => {
+router.get("/salesperlocation/daterange", async (req, res) => {
   const { start_date, end_date } = req.query;
   try {
-    const result = await poolCustomer.query(`
+    const result = await poolCustomer.query(
+      `
       SELECT
         O."locationId",
         SUM(O."totalAmount") as total_sales
       FROM public."Orders" O
       WHERE O."orderAt" BETWEEN $1 AND $2
       GROUP BY O."locationId";
-    `, [start_date, end_date]);
-    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.locationNames);
+    `,
+      [start_date, end_date]
+    );
+    const enrichedResult = enrichWithDisplayNamesAndSort(
+      result.rows,
+      req.locations
+    );
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Endpoint for SKU wise sales per location by day
-router.get('/salesperlocation/sku/day', async (req, res) => {
+router.get("/salesperlocation/sku/day", async (req, res) => {
   try {
     const result = await poolCustomer.query(`
       SELECT
@@ -154,16 +214,19 @@ router.get('/salesperlocation/sku/day', async (req, res) => {
       GROUP BY O."locationId", sale_day, OI."variantId"
       ORDER BY sale_day;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.locationNames);
+    const enrichedResult = enrichWithDisplayNamesAndSort(
+      result.rows,
+      req.locations
+    );
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Endpoint for SKU wise sales per location by week
-router.get('/salesperlocation/sku/week', async (req, res) => {
+router.get("/salesperlocation/sku/week", async (req, res) => {
   try {
     const result = await poolCustomer.query(`
       SELECT
@@ -179,16 +242,19 @@ router.get('/salesperlocation/sku/week', async (req, res) => {
       GROUP BY O."locationId", sale_year, sale_week, OI."variantId"
       ORDER BY sale_year, sale_week;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.locationNames);
+    const enrichedResult = enrichWithDisplayNamesAndSort(
+      result.rows,
+      req.locations
+    );
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Endpoint for SKU wise sales per location by month
-router.get('/salesperlocation/sku/month', async (req, res) => {
+router.get("/salesperlocation/sku/month", async (req, res) => {
   try {
     const result = await poolCustomer.query(`
       SELECT
@@ -204,19 +270,23 @@ router.get('/salesperlocation/sku/month', async (req, res) => {
       GROUP BY O."locationId", sale_year, sale_month, OI."variantId"
       ORDER BY sale_year, sale_month;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.locationNames);
+    const enrichedResult = enrichWithDisplayNamesAndSort(
+      result.rows,
+      req.locations
+    );
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
 // Endpoint for SKU wise sales per location by date range
-router.get('/salesperlocation/sku/daterange', async (req, res) => {
+router.get("/salesperlocation/sku/daterange", async (req, res) => {
   const { start_date, end_date } = req.query;
   try {
-    const result = await poolCustomer.query(`
+    const result = await poolCustomer.query(
+      `
       SELECT
         O."locationId",
         OI."variantId",
@@ -226,12 +296,17 @@ router.get('/salesperlocation/sku/daterange', async (req, res) => {
       JOIN public."OrderItems" OI ON O.id = OI."orderId"
       WHERE O."orderAt" BETWEEN $1 AND $2
       GROUP BY O."locationId", OI."variantId";
-    `, [start_date, end_date]);
-    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.locationNames);
+    `,
+      [start_date, end_date]
+    );
+    const enrichedResult = enrichWithDisplayNamesAndSort(
+      result.rows,
+      req.locations
+    );
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
