@@ -7,9 +7,8 @@ import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { DocumentArrowDownIcon } from "@heroicons/react/24/solid";
+import { DocumentArrowDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 
 const SalesPerCustomer = () => {
   const [data, setData] = useState([]);
@@ -86,9 +85,14 @@ const SalesPerCustomer = () => {
 
     try {
       const response = await axios.get(endpoint);
-      setData(response.data);
-      setFilteredData(response.data);
-      console.log(response.data);
+      const enrichedData = response.data.map(item => ({
+        ...item,
+        startDate: startDateString,
+        endDate: endDateString
+      }));
+      setData(enrichedData);
+      setFilteredData(enrichedData);
+      console.log(enrichedData);
     } catch (error) {
       setError(error);
       console.error(error);
@@ -121,10 +125,7 @@ const SalesPerCustomer = () => {
       {
         Header: "Total Sales",
         accessor: "total_sales",
-        Cell: ({ value }) => {
-          const numValue = Number(value);
-          return !isNaN(numValue) ? numValue.toFixed(3) : "N/A";
-        },
+        Cell: ({ value }) => (value !== undefined ? value.toFixed(3) : "N/A"),
       },
     ];
 
@@ -193,10 +194,7 @@ const SalesPerCustomer = () => {
           {
             Header: "Total Sales",
             accessor: "total_sales",
-            Cell: ({ value }) => {
-              const numValue = Number(value);
-              return !isNaN(numValue) ? numValue.toFixed(3) : "N/A";
-            },
+            Cell: ({ value }) => (value !== undefined ? value.toFixed(3) : "N/A"),
           },
         ];
         break;
@@ -214,10 +212,7 @@ const SalesPerCustomer = () => {
         {
           Header: "Total Quantity",
           accessor: "total_quantity",
-          Cell: ({ value }) => {
-            const numValue = Number(value);
-            return !isNaN(numValue) ? numValue.toFixed(3) : "N/A";
-          },
+          Cell: ({ value }) => (value !== undefined ? Number(value).toFixed(3) : "N/A"),
         }
       );
     }
@@ -269,10 +264,7 @@ const SalesPerCustomer = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.setAttribute("href", url);
-    a.setAttribute(
-      "download",
-      `Customer_sales_data_${timePeriod}_${dataType}.csv`
-    );
+    a.setAttribute("download", `Customer_sales_data_${timePeriod}_${dataType}.csv`);
     a.click();
   };
 
@@ -526,56 +518,62 @@ const SalesPerCustomer = () => {
                               })}
                             </tbody>
                           </table>
-                          <div className="pagination">
-                            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-                              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                <div>
-                                  <p className="text-sm text-gray-700">
-                                    Showing{" "}
-                                    <span className="font-medium">
-                                      {pageIndex * pageSize + 1}
-                                    </span>{" "}
-                                    to{" "}
-                                    <span className="font-medium">
-                                      {pageIndex * pageSize + page.length}
-                                    </span>{" "}
-                                    of{" "}
-                                    <span className="font-medium">
-                                      {pageOptions.length * pageSize}
-                                    </span>{" "}
-                                    results
-                                  </p>
-                                </div>
-                                <div>
-                                  <nav
-                                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                                    aria-label="Pagination"
+                          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                            <div className="flex flex-1 justify-between sm:hidden">
+                              <button
+                                onClick={() => previousPage()}
+                                disabled={!canPreviousPage}
+                                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                              >
+                                Previous
+                              </button>
+                              <button
+                                onClick={() => nextPage()}
+                                disabled={!canNextPage}
+                                className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                              >
+                                Next
+                              </button>
+                            </div>
+                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                              <div>
+                                <p className="text-sm text-gray-700">
+                                  Showing <span className="font-medium">{pageIndex * pageSize + 1}</span> to{" "}
+                                  <span className="font-medium">
+                                    {Math.min((pageIndex + 1) * pageSize, filteredData.length)}
+                                  </span>{" "}
+                                  of <span className="font-medium">{filteredData.length}</span> results
+                                </p>
+                              </div>
+                              <div>
+                                <nav
+                                  className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                  aria-label="Pagination"
+                                >
+                                  <button
+                                    onClick={() => previousPage()}
+                                    disabled={!canPreviousPage}
+                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
                                   >
-                                    <button
-                                      onClick={() => previousPage()}
-                                      className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0`}
-                                      disabled={!canPreviousPage}
-                                    >
-                                      <span className="sr-only">Previous</span>
-                                      <ChevronLeftIcon
-                                        className="h-5 w-5"
-                                        aria-hidden="true"
-                                      />
-                                    </button>
-                                    {renderPageNumbers()}
-                                    <button
-                                      onClick={() => nextPage()}
-                                      className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0`}
-                                      disabled={!canNextPage}
-                                    >
-                                      <span className="sr-only">Next</span>
-                                      <ChevronRightIcon
-                                        className="h-5 w-5"
-                                        aria-hidden="true"
-                                      />
-                                    </button>
-                                  </nav>
-                                </div>
+                                    <span className="sr-only">Previous</span>
+                                    <ChevronLeftIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
+                                  </button>
+                                  {renderPageNumbers()}
+                                  <button
+                                    onClick={() => nextPage()}
+                                    disabled={!canNextPage}
+                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                  >
+                                    <span className="sr-only">Next</span>
+                                    <ChevronRightIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
+                                  </button>
+                                </nav>
                               </div>
                             </div>
                           </div>

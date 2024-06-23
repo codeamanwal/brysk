@@ -85,9 +85,14 @@ const SalesPerLocation = () => {
 
     try {
       const response = await axios.get(endpoint);
-      console.log("Fetched Data:", response.data); // Log the fetched data for debugging
-      setData(response.data);
-      setFilteredData(response.data);
+      const fetchedData = response.data.map(item => ({
+        ...item,
+        startDate: startDateString,
+        endDate: endDateString
+      }));
+      console.log("Fetched Data:", fetchedData); // Log the fetched data for debugging
+      setData(fetchedData);
+      setFilteredData(fetchedData);
     } catch (error) {
       setError(error);
       console.error(error);
@@ -193,7 +198,6 @@ const SalesPerLocation = () => {
             Header: "Start Date",
             accessor: "startDate",
             Cell: ({ value }) => {
-              console.log("Start Date Cell Value:", value); // Log the value for debugging
               return value ? format(new Date(value), "yyyy-MM-dd") : "N/A";
             },
           },
@@ -201,7 +205,6 @@ const SalesPerLocation = () => {
             Header: "End Date",
             accessor: "endDate",
             Cell: ({ value }) => {
-              console.log("End Date Cell Value:", value); // Log the value for debugging
               return value ? format(new Date(value), "yyyy-MM-dd") : "N/A";
             },
           },
