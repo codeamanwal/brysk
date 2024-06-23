@@ -1,11 +1,13 @@
 import { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "../contexts/SidebarContext";
 import {
   ChevronDownIcon,
   ChevronRightIcon,
   XMarkIcon,
+  Bars3Icon,
+  ArrowLeftOnRectangleIcon,
 } from "@heroicons/react/24/outline";
 
 const navigation = [
@@ -40,6 +42,7 @@ export default function Sidebar() {
   const { sidebarOpen, setSidebarOpen } = useSidebar();
   const [openSections, setOpenSections] = useState({});
   const location = useLocation();
+  const history = useNavigate();
 
   useEffect(() => {
     const currentPath = location.pathname;
@@ -67,8 +70,23 @@ export default function Sidebar() {
     }));
   };
 
+  const handleLogout = () => {
+    history("/");
+  };
+
   return (
     <div>
+      {/* Hamburger menu button for mobile view */}
+      <div className="lg:hidden p-4 bg-gray-800">
+        <button
+          type="button"
+          className="text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+          onClick={() => setSidebarOpen(true)}
+        >
+          <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+        </button>
+      </div>
+
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog
           as="div"
@@ -103,7 +121,7 @@ export default function Sidebar() {
                       <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                     </button>
                   </div>
-                  <div className="mt-5">
+                  <div className="mt-5 flex-1">
                     <nav>
                       {navigation.map((section) => (
                         <div key={section.name}>
@@ -146,6 +164,15 @@ export default function Sidebar() {
                         </div>
                       ))}
                     </nav>
+                  </div>
+                  <div className="mt-auto">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center px-2 py-2 text-left text-gray-400 hover:text-white hover:bg-black text-sm font-medium rounded-md"
+                    >
+                      <ArrowLeftOnRectangleIcon className="mr-3 h-6 w-6" aria-hidden="true" />
+                      Logout
+                    </button>
                   </div>
                 </div>
               </Dialog.Panel>
@@ -203,6 +230,15 @@ export default function Sidebar() {
                 </div>
               ))}
             </nav>
+            <div className="mt-auto">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center px-2 py-2 text-left text-gray-400 hover:text-white hover:bg-black text-sm font-medium rounded-md"
+              >
+                <ArrowLeftOnRectangleIcon className="mr-3 h-6 w-6" aria-hidden="true" />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </div>

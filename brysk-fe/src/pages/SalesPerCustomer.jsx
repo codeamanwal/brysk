@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
-import CityFilter from "../components/CityFilter";
 import axios from "axios";
 import { useTable, usePagination } from "react-table";
 import { format, isValid } from "date-fns";
@@ -393,7 +392,7 @@ const SalesPerCustomer = () => {
                 <div className="flow-root">
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 pb-2">
                     <div className="inline-block min-w-full py-2 align-middle">
-                      <div className="my-4 grid lg:grid-cols-3 items-center">
+                      <div className="my-4 grid lg:grid-cols-2 items-center">
                         <label>
                           Time Period:
                           <select
@@ -418,8 +417,6 @@ const SalesPerCustomer = () => {
                             <option value="sku">SKU wise</option>
                           </select>
                         </label>
-
-                        <CityFilter onCityChange={handleCityChange} />
 
                         {timePeriod === "date-range" && (
                           <div className="mt-4">
