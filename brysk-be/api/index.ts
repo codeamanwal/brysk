@@ -3,6 +3,7 @@ const cors = require("cors"); // Import the cors middleware
 const { Pool } = require("pg");
 require("dotenv").config();
 const salesRoutes = require('./sales.js');
+const customerSalesRoutes = require('./customersales.js')
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -41,6 +42,8 @@ poolAdmin.connect((err) => {
 
 // Endpoint to get sales per location from the oh-admin-api database
 app.use('/api', salesRoutes);
+
+app.use('/api', customerSalesRoutes);
 
 app.get("/api/salespercustomer", async (req, res) => {
   try {

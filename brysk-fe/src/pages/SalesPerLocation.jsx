@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
-import SearchBar from "../components/SearchBar";
 import CityFilter from "../components/CityFilter";
 import axios from "axios";
 import { useTable, usePagination } from "react-table";
 import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
-import SalesBarChart from "../components/charts/SalesBarChart";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { DocumentArrowDownIcon } from "@heroicons/react/24/solid";
+import { DocumentArrowDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
 
 const SalesPerLocation = () => {
@@ -41,9 +39,7 @@ const SalesPerLocation = () => {
 
     setLoading(true);
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation`;
-    const startDateString = startDate
-      ? startDate.toISOString().split("T")[0]
-      : "";
+    const startDateString = startDate ? startDate.toISOString().split("T")[0] : "";
     const endDateString = endDate ? endDate.toISOString().split("T")[0] : "";
 
     switch (dataType) {
@@ -89,9 +85,9 @@ const SalesPerLocation = () => {
 
     try {
       const response = await axios.get(endpoint);
+      console.log("Fetched Data:", response.data); // Log the fetched data for debugging
       setData(response.data);
       setFilteredData(response.data);
-      console.log(response.data);
     } catch (error) {
       setError(error);
       console.error(error);
@@ -102,9 +98,7 @@ const SalesPerLocation = () => {
 
   const fetchLocations = async () => {
     try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/locations`
-      );
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/locations`);
       setLocations(response.data);
     } catch (error) {
       console.error("Error fetching locations:", error);
@@ -133,10 +127,15 @@ const SalesPerLocation = () => {
       {
         Header: "Location",
         accessor: "displayName",
+        Cell: ({ value }) => (value ? value : "N/A"),
       },
       {
         Header: "Total Sales",
         accessor: "total_sales",
+        Cell: ({ value }) => {
+          const numValue = Number(value);
+          return !isNaN(numValue) ? numValue.toFixed(3) : "N/A";
+        },
       },
     ];
 
@@ -158,10 +157,12 @@ const SalesPerLocation = () => {
           {
             Header: "Sale Year",
             accessor: "sale_year",
+            Cell: ({ value }) => (value ? value : "N/A"),
           },
           {
             Header: "Sale Week",
             accessor: "sale_week",
+            Cell: ({ value }) => (value ? value : "N/A"),
           }
         );
         break;
@@ -172,10 +173,12 @@ const SalesPerLocation = () => {
           {
             Header: "Sale Year",
             accessor: "sale_year",
+            Cell: ({ value }) => (value ? value : "N/A"),
           },
           {
             Header: "Sale Month",
             accessor: "sale_month",
+            Cell: ({ value }) => (value ? value : "N/A"),
           }
         );
         break;
@@ -184,22 +187,31 @@ const SalesPerLocation = () => {
           {
             Header: "Location",
             accessor: "displayName",
+            Cell: ({ value }) => (value ? value : "N/A"),
           },
           {
             Header: "Start Date",
             accessor: "startDate",
-            Cell: ({ value }) =>
-              value ? format(new Date(value), "yyyy-MM-dd") : "",
+            Cell: ({ value }) => {
+              console.log("Start Date Cell Value:", value); // Log the value for debugging
+              return value ? format(new Date(value), "yyyy-MM-dd") : "N/A";
+            },
           },
           {
             Header: "End Date",
             accessor: "endDate",
-            Cell: ({ value }) =>
-              value ? format(new Date(value), "yyyy-MM-dd") : "",
+            Cell: ({ value }) => {
+              console.log("End Date Cell Value:", value); // Log the value for debugging
+              return value ? format(new Date(value), "yyyy-MM-dd") : "N/A";
+            },
           },
           {
             Header: "Total Sales",
             accessor: "total_sales",
+            Cell: ({ value }) => {
+              const numValue = Number(value);
+              return !isNaN(numValue) ? numValue.toFixed(3) : "N/A";
+            },
           },
         ];
         break;
@@ -212,10 +224,15 @@ const SalesPerLocation = () => {
         {
           Header: "Variant ID",
           accessor: "variantId",
+          Cell: ({ value }) => (value ? value : "N/A"),
         },
         {
           Header: "Total Quantity",
           accessor: "total_quantity",
+          Cell: ({ value }) => {
+            const numValue = Number(value);
+            return !isNaN(numValue) ? numValue.toFixed(3) : "N/A";
+          },
         }
       );
     }
@@ -267,8 +284,66 @@ const SalesPerLocation = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.setAttribute("href", url);
-    a.setAttribute("download", "sales_data.csv");
+    a.setAttribute("download", `Location_sales_data_${timePeriod}_${dataType}.csv`);
     a.click();
+  };
+
+  const renderPageNumbers = () => {
+    const pagesToShow = 3;
+    const totalPageNumbers = pagesToShow * 2 + 1;
+    let startPage = Math.max(1, pageIndex - pagesToShow);
+    let endPage = Math.min(pageCount, pageIndex + pagesToShow);
+
+    if (pageCount > totalPageNumbers) {
+      if (pageIndex - pagesToShow <= 0) {
+        startPage = 1;
+        endPage = totalPageNumbers;
+      } else if (pageIndex + pagesToShow >= pageCount) {
+        startPage = pageCount - totalPageNumbers + 1;
+        endPage = pageCount;
+      }
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => gotoPage(i - 1)}
+          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${pageIndex === i - 1 ? 'bg-gray-600 text-white' : ''}`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return (
+      <>
+        {startPage > 1 && (
+          <>
+            <button
+              onClick={() => gotoPage(0)}
+              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${pageIndex === 0 ? 'bg-gray-600 text-white' : ''}`}
+            >
+              1
+            </button>
+            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">...</span>
+          </>
+        )}
+        {pages}
+        {endPage < pageCount && (
+          <>
+            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">...</span>
+            <button
+              onClick={() => gotoPage(pageCount - 1)}
+              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${pageIndex === pageCount - 1 ? 'bg-gray-600 text-white' : ''}`}
+            >
+              {pageCount}
+            </button>
+          </>
+        )}
+      </>
+    );
   };
 
   return (
@@ -327,7 +402,7 @@ const SalesPerLocation = () => {
                 <div className="flow-root">
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 pb-2">
                     <div className="inline-block min-w-full py-2 align-middle">
-                      <div className="my-4">
+                      <div className="my-4 grid lg:grid-cols-3 items-center">
                         <label>
                           Time Period:
                           <select
@@ -341,7 +416,7 @@ const SalesPerLocation = () => {
                             <option value="date-range">Date Range</option>
                           </select>
                         </label>
-                        <label className="ml-4">
+                        <label className="mt-2 lg:mt-0">
                           Data Type:
                           <select
                             value={dataType}
@@ -452,63 +527,64 @@ const SalesPerLocation = () => {
                               })}
                             </tbody>
                           </table>
-                          <div className="pagination">
-                            <button
-                              onClick={() => gotoPage(0)}
-                              disabled={!canPreviousPage}
-                            >
-                              {"<<"}
-                            </button>{" "}
-                            <button
-                              onClick={() => previousPage()}
-                              disabled={!canPreviousPage}
-                            >
-                              {"<"}
-                            </button>{" "}
-                            <span>
-                              Page{" "}
-                              <strong>
-                                {pageIndex + 1} of {pageOptions.length}
-                              </strong>{" "}
-                            </span>
-                            <button
-                              onClick={() => nextPage()}
-                              disabled={!canNextPage}
-                            >
-                              {">"}
-                            </button>{" "}
-                            <button
-                              onClick={() => gotoPage(pageCount - 1)}
-                              disabled={!canNextPage}
-                            >
-                              {">>"}
-                            </button>{" "}
-                            <span>
-                              | Go to page:{" "}
-                              <input
-                                type="number"
-                                defaultValue={pageIndex + 1}
-                                onChange={(e) => {
-                                  const page = e.target.value
-                                    ? Number(e.target.value) - 1
-                                    : 0;
-                                  gotoPage(page);
-                                }}
-                                style={{ width: "100px" }}
-                              />
-                            </span>{" "}
-                            <select
-                              value={pageSize}
-                              onChange={(e) => {
-                                setPageSize(Number(e.target.value));
-                              }}
-                            >
-                              {[10, 20, 30, 40, 50].map((pageSize) => (
-                                <option key={pageSize} value={pageSize}>
-                                  Show {pageSize}
-                                </option>
-                              ))}
-                            </select>
+                          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                            <div className="flex flex-1 justify-between sm:hidden">
+                              <button
+                                onClick={() => previousPage()}
+                                disabled={!canPreviousPage}
+                                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                              >
+                                Previous
+                              </button>
+                              <button
+                                onClick={() => nextPage()}
+                                disabled={!canNextPage}
+                                className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                              >
+                                Next
+                              </button>
+                            </div>
+                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                              <div>
+                                <p className="text-sm text-gray-700">
+                                  Showing <span className="font-medium">{pageIndex * pageSize + 1}</span> to{" "}
+                                  <span className="font-medium">
+                                    {Math.min((pageIndex + 1) * pageSize, filteredData.length)}
+                                  </span>{" "}
+                                  of <span className="font-medium">{filteredData.length}</span> results
+                                </p>
+                              </div>
+                              <div>
+                                <nav
+                                  className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                  aria-label="Pagination"
+                                >
+                                  <button
+                                    onClick={() => previousPage()}
+                                    disabled={!canPreviousPage}
+                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                  >
+                                    <span className="sr-only">Previous</span>
+                                    <ChevronLeftIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
+                                  </button>
+                                  {renderPageNumbers()}
+                                  <button
+                                    onClick={() => nextPage()}
+                                    disabled={!canNextPage}
+                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                  >
+                                    <span className="sr-only">Next</span>
+                                    <ChevronRightIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
+                                  </button>
+                                </nav>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ) : (
