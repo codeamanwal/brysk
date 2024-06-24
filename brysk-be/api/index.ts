@@ -48,24 +48,6 @@ poolAdmin.connect((err) => {
 app.use('/api', salesRoutes);
 app.use('/api', customerSalesRoutes);
 
-app.get("/api/salespercustomer", async (req, res) => {
-  try {
-    const result = await poolAdmin.query(`
-      SELECT
-        O."locationId",
-        DATE(O."orderAt") as sale_day,
-        SUM(O."totalAmount") as total_sales
-      FROM public."Orders" O
-      WHERE O.status = 'paid'
-      GROUP BY O."locationId", sale_day
-      ORDER BY sale_day;
-    `);
-    res.json(result.rows);
-  } catch (error) {
-    console.error("Error fetching data from oh-admin-api database:", error);
-    res.status(500).json({ error: "Error fetching data from oh-admin-api database", details: error.message });
-  }
-});
 
 // Endpoint to list all tables in the oh-ims-api database
 app.get("/api/ims-tables", async (req, res) => {
