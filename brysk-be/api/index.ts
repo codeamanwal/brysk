@@ -31,8 +31,7 @@ const poolIMS = new Pool({
 });
 
 const corsOptions = {
-  origin: "https://brysk-neon.vercel.app",
-  optionsSuccessStatus: 200,
+  origin: "*",
 };
 
 app.use(express.json(corsOptions));
