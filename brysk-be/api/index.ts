@@ -30,7 +30,12 @@ const poolIMS = new Pool({
   port: process.env.IMS_PGPORT,
 });
 
-app.use(express.json());
+const corsOptions = {
+  origin: "https://brysk-neon.vercel.app",
+  optionsSuccessStatus: 200,
+};
+
+app.use(express.json(corsOptions));
 
 poolAdmin.connect((err) => {
   if (err) {

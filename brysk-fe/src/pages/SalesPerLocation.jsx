@@ -550,7 +550,7 @@ const SalesPerLocation = () => {
                             <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                               <div>
                                 <p className="text-sm text-gray-700">
-                                  Showing <span className="font-medium">{pageIndex * pageSize + 1}</span> to{" "}
+                                  Showing <span className="font-medium">{pageIndex * pageSize + 1}</span> -{" "}
                                   <span className="font-medium">
                                     {Math.min((pageIndex + 1) * pageSize, filteredData.length)}
                                   </span>{" "}
