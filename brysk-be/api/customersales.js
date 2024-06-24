@@ -65,6 +65,7 @@ router.get("/salespercustomer/day", async (req, res) => {
       result.rows,
       req.users
     );
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Explicitly set CORS headers
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
