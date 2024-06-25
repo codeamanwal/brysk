@@ -37,7 +37,7 @@ router.get("/inventory/location-store-warehouse", async (req, res) => {
           END) AS start_weight
         FROM public."LocationInventories" LI
         JOIN public."LocationInventoryLogs" LIL ON LI.id = LIL."locationInventoryId"
-        WHERE LIL."createdAt" < $1
+        WHERE LIL."createdAt" < $1::date
         GROUP BY LI."locationId", LI."variantId"
       ),
       -- Calculate the inventory movements during the specific date
@@ -57,7 +57,7 @@ router.get("/inventory/location-store-warehouse", async (req, res) => {
           END) AS movement_weight
         FROM public."LocationInventories" LI
         JOIN public."LocationInventoryLogs" LIL ON LI.id = LIL."locationInventoryId"
-        WHERE LIL."createdAt"::date = $1
+        WHERE LIL."createdAt"::date = $1::date
         GROUP BY LI."locationId", LI."variantId"
       ),
       -- Calculate the ending inventory

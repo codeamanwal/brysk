@@ -109,7 +109,7 @@ router.get("/salesperlocation/day", async (req, res) => {
       FROM public."Orders" O
       WHERE O.status = 'paid'
       GROUP BY O."locationId", sale_day
-      ORDER BY sale_day;
+      ORDER BY sale_day DESC;
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
@@ -134,7 +134,7 @@ router.get("/salesperlocation/week", async (req, res) => {
       FROM public."Orders" O
       WHERE O.status = 'paid'
       GROUP BY O."locationId", sale_year, sale_week
-      ORDER BY sale_year, sale_week;
+      ORDER BY sale_year DESC, sale_week DESC;
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
@@ -159,7 +159,7 @@ router.get("/salesperlocation/month", async (req, res) => {
       FROM public."Orders" O
       WHERE O.status = 'paid'
       GROUP BY O."locationId", sale_year, sale_month
-      ORDER BY sale_year, sale_month;
+      ORDER BY sale_year DESC, sale_month DESC;
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
@@ -212,7 +212,7 @@ router.get("/salesperlocation/sku/day", async (req, res) => {
       JOIN public."OrderItems" OI ON O.id = OI."orderId"
       WHERE O.status = 'paid'
       GROUP BY O."locationId", sale_day, OI."variantId"
-      ORDER BY sale_day;
+      ORDER BY sale_day DESC;
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
@@ -240,7 +240,7 @@ router.get("/salesperlocation/sku/week", async (req, res) => {
       JOIN public."OrderItems" OI ON O.id = OI."orderId"
       WHERE O.status = 'paid'
       GROUP BY O."locationId", sale_year, sale_week, OI."variantId"
-      ORDER BY sale_year, sale_week;
+      ORDER BY sale_year DESC, sale_week DESC;
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
@@ -268,7 +268,7 @@ router.get("/salesperlocation/sku/month", async (req, res) => {
       JOIN public."OrderItems" OI ON O.id = OI."orderId"
       WHERE O.status = 'paid'
       GROUP BY O."locationId", sale_year, sale_month, OI."variantId"
-      ORDER BY sale_year, sale_month;
+      ORDER BY sale_year DESC, sale_month DESC;
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,

@@ -31,7 +31,7 @@ const InventoryAtLocation = () => {
     const startDateString = startDate
       ? startDate.toISOString().split("T")[0]
       : "";
-    let endpoint = `${process.env.REACT_APP_BACKEND_URL}/inventory/location-store-warehose?date=${startDateString}`;
+    let endpoint = `${process.env.REACT_APP_BACKEND_URL}/inventory/location-store-warehouse?date=${startDateString}`;
 
     try {
       const response = await axios.get(endpoint);
@@ -68,25 +68,13 @@ const InventoryAtLocation = () => {
         value ? format(new Date(value), "yyyy-MM-dd") : "N/A",
     },
     {
-      Header: "Current Inventory (System Count)",
-      accessor: "end_qty",
-      Cell: ({ value }) =>
-        typeof value === "number" ? value.toFixed(3) : "N/A",
-    },
-    {
-      Header: "Current Inventory (Weight-Based)",
+      Header: "Current Inventory",
       accessor: "end_weight",
       Cell: ({ value }) =>
         typeof value === "number" ? value.toFixed(3) : "N/A",
     },
     {
-      Header: "Inventory Loss (Qty)",
-      accessor: "qty_loss",
-      Cell: ({ value }) =>
-        typeof value === "number" ? value.toFixed(3) : "N/A",
-    },
-    {
-      Header: "Inventory Loss (Weight)",
+      Header: "Inventory Loss",
       accessor: "weight_loss",
       Cell: ({ value }) =>
         typeof value === "number" ? value.toFixed(3) : "N/A",

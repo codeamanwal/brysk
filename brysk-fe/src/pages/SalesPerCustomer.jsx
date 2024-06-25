@@ -20,6 +20,7 @@ const SalesPerCustomer = () => {
   const [cityId, setCityId] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -29,13 +30,17 @@ const SalesPerCustomer = () => {
     filterDataByCity(cityId);
   }, [data, cityId]);
 
+  useEffect(() => {
+    filterDataBySearchQuery(searchQuery);
+  }, [searchQuery, data]);
+
   const fetchData = async () => {
     if (timePeriod === "date-range" && (!startDate || !endDate)) {
       return;
     }
 
     setLoading(true);
-    setError('')
+    setError(null);
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/salespercustomer`;
     const startDateString = startDate
       ? startDate.toISOString().split("T")[0]
@@ -110,6 +115,17 @@ const SalesPerCustomer = () => {
     }
   };
 
+  const filterDataBySearchQuery = (query) => {
+    if (!query) {
+      setFilteredData(data);
+    } else {
+      const filtered = data.filter((item) =>
+        item.displayName.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredData(filtered);
+    }
+  };
+
   const handleCityChange = (newCityId) => {
     setCityId(newCityId);
     filterDataByCity(newCityId);
@@ -123,6 +139,11 @@ const SalesPerCustomer = () => {
         Cell: ({ value }) => (value ? value : "N/A"),
       },
       {
+        Header: "Phone Number",
+        accessor: "phoneNumber",
+        Cell: ({ value }) => (value ? value : "N/A"),
+      },
+      {
         Header: "Total Sales",
         accessor: "total_sales",
         Cell: ({ value }) => (value !== undefined ? value.toFixed(3) : "N/A"),
@@ -131,12 +152,12 @@ const SalesPerCustomer = () => {
 
     switch (timePeriod) {
       case "day":
-        columns.splice(1, 0, {
+        columns.splice(2, 0, {
           Header: "Sale Day",
           accessor: "sale_day",
           Cell: ({ value }) =>
             isValid(new Date(value))
-              ? format(new Date(value), "yyyy-MM-dd HH:mm:ss")
+              ? format(new Date(value), "yyyy-MM-dd, HH:mm:ss")
               : "Invalid Date",
         });
         break;
@@ -457,7 +478,37 @@ const SalesPerCustomer = () => {
                           </div>
                         )}
                       </div>
-                      {error ? <p>{error.message}</p> : null}
+                      <div className="mt-4">
+                        <input
+                          type="text"
+                          placeholder="Search by Customer Name"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="p-2 border rounded w-full"
+                        />
+                      </div>
+                      {error && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                          <strong className="font-bold">Oops! Something went wrong.</strong>
+                          <span className="block sm:inline">We encountered an issue while fetching the data. Please try again later.</span>
+                          <span
+                            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+                            onClick={() => setError(null)}
+                          >
+                            <svg
+                              className="fill-current h-6 w-6 text-red-500"
+                              role="button"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 20 20"
+                            >
+                              <title>Close</title>
+                              <path
+                                d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
+                              />
+                            </svg>
+                          </span>
+                        </div>
+                      )}
                       {loading ||
                       (timePeriod === "date-range" &&
                         (!startDate || !endDate)) ? (
@@ -473,7 +524,7 @@ const SalesPerCustomer = () => {
                             wrapperClass=""
                           />
                         </div>
-                      ) : view === "table" ? (
+                      ) : view === "table" ? (!error &&
                         <div>
                           <table
                             {...getTableProps()}

@@ -22,31 +22,37 @@ const poolAdmin = new Pool({
 
 // Middleware to fetch and attach user names and display names
 router.use(async (req, res, next) => {
-    try {
-      const result = await poolCustomer.query(`
-        SELECT id, name
-        FROM public."Users";
-      `);
-      const users = {};
-      result.rows.forEach(row => {
-        users[row.id] = row.name;
-      });
-      req.users = users;
-      next();
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
-  
-  // Helper function to enrich results with display names and sort them
-  const enrichWithDisplayNamesAndSort = (rows, users) => {
-    const enrichedRows = rows.map(row => ({
-      ...row,
-      displayName: users[row.userId] || "Unknown"
-    }));
-    return enrichedRows.sort((a, b) => a.displayName.localeCompare(b.displayName));
-  };
+  try {
+    const result = await poolCustomer.query(`
+      SELECT id, name, "phoneNumber"
+      FROM public."Users";
+    `);
+    const users = {};
+    result.rows.forEach((row) => {
+      users[row.id] = {
+        name: row.name,
+        phoneNumber: row.phoneNumber,
+      };
+    });
+    req.users = users;
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Helper function to enrich results with display names and sort them
+const enrichWithDisplayNamesAndSort = (rows, users) => {
+  const enrichedRows = rows.map((row) => ({
+    ...row,
+    displayName: users[row.userId] ? users[row.userId].name : "Unknown",
+    phoneNumber: users[row.userId] ? users[row.userId].phoneNumber : "Unknown",
+  }));
+  return enrichedRows.sort((a, b) =>
+    a.displayName.localeCompare(b.displayName)
+  );
+};
 
 // Endpoint for sales per customer by day
 router.get("/salespercustomer/day", async (req, res) => {
@@ -59,13 +65,10 @@ router.get("/salespercustomer/day", async (req, res) => {
       FROM public."Orders" O
       WHERE O.status = 'paid'
       GROUP BY O."userId", sale_day
-      ORDER BY sale_day;
+      ORDER BY sale_day DESC;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(
-      result.rows,
-      req.users
-    );
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Explicitly set CORS headers
+    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
+    res.setHeader("Access-Control-Allow-Origin", "*"); // Explicitly set CORS headers
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
@@ -85,12 +88,9 @@ router.get("/salespercustomer/week", async (req, res) => {
       FROM public."Orders" O
       WHERE O.status = 'paid'
       GROUP BY O."userId", sale_year, sale_week
-      ORDER BY sale_year, sale_week;
+      ORDER BY sale_year DESC, sale_week DESC;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(
-      result.rows,
-      req.users
-    );
+    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
@@ -110,12 +110,9 @@ router.get("/salespercustomer/month", async (req, res) => {
       FROM public."Orders" O
       WHERE O.status = 'paid'
       GROUP BY O."userId", sale_year, sale_month
-      ORDER BY sale_year, sale_month;
+      ORDER BY sale_year DESC, sale_month DESC;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(
-      result.rows,
-      req.users
-    );
+    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
@@ -131,17 +128,16 @@ router.get("/salespercustomer/daterange", async (req, res) => {
       `
       SELECT
         O."userId",
-        SUM(O."totalAmount") as total_sales
+        SUM(O."totalAmount") as total_sales,
+        MAX(O."orderAt") as latest_order
       FROM public."Orders" O
       WHERE O."orderAt" BETWEEN $1 AND $2
-      GROUP BY O."userId";
+      GROUP BY O."userId"
+      ORDER BY latest_order DESC;
     `,
       [start_date, end_date]
     );
-    const enrichedResult = enrichWithDisplayNamesAndSort(
-      result.rows,
-      req.users
-    );
+    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
@@ -163,12 +159,9 @@ router.get("/salespercustomer/sku/day", async (req, res) => {
       JOIN public."OrderItems" OI ON O.id = OI."orderId"
       WHERE O.status = 'paid'
       GROUP BY O."userId", sale_day, OI."variantId"
-      ORDER BY sale_day;
+      ORDER BY sale_day DESC;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(
-      result.rows,
-      req.users
-    );
+    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
@@ -191,12 +184,9 @@ router.get("/salespercustomer/sku/week", async (req, res) => {
       JOIN public."OrderItems" OI ON O.id = OI."orderId"
       WHERE O.status = 'paid'
       GROUP BY O."userId", sale_year, sale_week, OI."variantId"
-      ORDER BY sale_year, sale_week;
+      ORDER BY sale_year DESC, sale_week DESC;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(
-      result.rows,
-      req.users
-    );
+    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
@@ -219,12 +209,9 @@ router.get("/salespercustomer/sku/month", async (req, res) => {
       JOIN public."OrderItems" OI ON O.id = OI."orderId"
       WHERE O.status = 'paid'
       GROUP BY O."userId", sale_year, sale_month, OI."variantId"
-      ORDER BY sale_year, sale_month;
+      ORDER BY sale_year DESC, sale_month DESC;
     `);
-    const enrichedResult = enrichWithDisplayNamesAndSort(
-      result.rows,
-      req.users
-    );
+    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
@@ -246,14 +233,12 @@ router.get("/salespercustomer/sku/daterange", async (req, res) => {
       FROM public."Orders" O
       JOIN public."OrderItems" OI ON O.id = OI."orderId"
       WHERE O."orderAt" BETWEEN $1 AND $2
-      GROUP BY O."userId", OI."variantId";
+      GROUP BY O."userId", OI."variantId"
+      ORDER BY MAX(O."orderAt") DESC;
     `,
       [start_date, end_date]
     );
-    const enrichedResult = enrichWithDisplayNamesAndSort(
-      result.rows,
-      req.users
-    );
+    const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
     console.error(err);
