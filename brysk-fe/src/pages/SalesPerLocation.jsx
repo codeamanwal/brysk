@@ -135,7 +135,7 @@ const SalesPerLocation = () => {
         Cell: ({ value }) => (value ? value : "N/A"),
       },
       {
-        Header: "Total Sales",
+        Header: "Total Sales (INR)",
         accessor: "total_sales",
         Cell: ({ value }) => {
           const numValue = Number(value);
@@ -209,7 +209,7 @@ const SalesPerLocation = () => {
             },
           },
           {
-            Header: "Total Sales",
+            Header: "Total Sales (INR)",
             accessor: "total_sales",
             Cell: ({ value }) => {
               const numValue = Number(value);

@@ -144,7 +144,7 @@ const SalesPerCustomer = () => {
         Cell: ({ value }) => (value ? value : "N/A"),
       },
       {
-        Header: "Total Sales",
+        Header: "Total Sales (INR)",
         accessor: "total_sales",
         Cell: ({ value }) => (value !== undefined ? value.toFixed(3) : "N/A"),
       },
@@ -213,7 +213,7 @@ const SalesPerCustomer = () => {
               value ? format(new Date(value), "yyyy-MM-dd") : "N/A",
           },
           {
-            Header: "Total Sales",
+            Header: "Total Sales (INR)",
             accessor: "total_sales",
             Cell: ({ value }) => (value !== undefined ? value.toFixed(3) : "N/A"),
           },
