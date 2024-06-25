@@ -2,8 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
 require("dotenv").config();
-const salesRoutes = require('./sales.js');
-const customerSalesRoutes = require('./customersales.js');
+const salesRoutes = require('./locationSales.js');
+const customerSalesRoutes = require('./customerSales.js');
+const inventoryAtLocationRoutes = require('./inventoryAtLocation.js');
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -44,9 +45,10 @@ poolAdmin.connect((err) => {
   }
 });
 
-// Endpoint to get sales per location from the oh-admin-api database
+
 app.use('/api', salesRoutes);
 app.use('/api', customerSalesRoutes);
+app.use('/api', inventoryAtLocationRoutes);
 
 
 // Endpoint to list all tables in the oh-ims-api database

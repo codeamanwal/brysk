@@ -35,6 +35,7 @@ const SalesPerCustomer = () => {
     }
 
     setLoading(true);
+    setError('')
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/salespercustomer`;
     const startDateString = startDate
       ? startDate.toISOString().split("T")[0]
