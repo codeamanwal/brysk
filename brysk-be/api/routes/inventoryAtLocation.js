@@ -14,6 +14,7 @@ const poolIMS = new Pool({
 // Endpoint to get inventory at location for a specific date
 router.get("/inventory/location-store-warehouse", async (req, res) => {
   const { date } = req.query;
+  console.log("date")
   if (!date) {
     return res.status(400).json({ error: "Date parameter is required" });
   }

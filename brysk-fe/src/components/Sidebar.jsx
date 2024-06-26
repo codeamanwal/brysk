@@ -191,7 +191,7 @@ export default function Sidebar() {
             />
           </div>
           <div className="mt-5 flex-1 flex flex-col">
-            <nav className="flex-1 px-2 space-y-1">
+            <nav className="flex-1 space-y-1">
               {navigation.map((section) => (
                 <div key={section.name}>
                   <button
