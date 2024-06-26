@@ -148,7 +148,7 @@ export default function Sidebar() {
                                       isActive
                                         ? "bg-brysk text-black"
                                         : "text-gray-400 hover:text-black hover:bg-hover",
-                                      "group flex items-center px-2 py-2 text-sm font-medium rounded-md break-words"
+                                      "group flex items-center px-2 py-2 text-sm font-medium rounded-md break-words mb-2"
                                     )
                                   }
                                 >
@@ -214,7 +214,7 @@ export default function Sidebar() {
                           className={({ isActive }) =>
                             classNames(
                               isActive ? "bg-brysk text-black" : "hover:bg-hover hover:text-black text-white",
-                              "group flex items-center px-2 py-2 text-sm font-medium rounded-md break-words"
+                              "group flex items-center px-2 py-2 text-sm font-medium rounded-md break-words mb-2"
                             )
                           }
                         >

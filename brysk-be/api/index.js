@@ -7,6 +7,7 @@ const customerSalesRoutes = require('./routes/customerSales.js');
 const inventoryAtLocationRoutes = require('./routes/inventoryAtLocation.js');
 const inventoryFlowRoutes = require('./routes/inventoryFlow.js');
 const numberOfBillsRouter = require('./routes/numberOfBills');
+const inventoryPreference = require('./routes/inventoryPreference')
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -25,6 +26,7 @@ app.use('/api', customerSalesRoutes);
 app.use('/api', inventoryAtLocationRoutes);
 app.use('/api', inventoryFlowRoutes)
 app.use('/api', numberOfBillsRouter)
+app.use('/api', inventoryPreference)
 
 
 app.get("/", async(req, res) => {
