@@ -506,12 +506,9 @@ const SalesPerLocation = () => {
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <strong className="font-bold">
-                                Oops! Something went wrong.
-                              </strong>
+                              <strong className="font-bold">Oops! Something went wrong.</strong>
                               <span className="block sm:inline">
-                                We encountered an issue while fetching the data.
-                                Please try again later.
+                                We encountered an issue while fetching the data. Please try again later.
                               </span>
                             </div>
                             <button
@@ -525,7 +522,9 @@ const SalesPerLocation = () => {
                                 viewBox="0 0 20 20"
                               >
                                 <title>Close</title>
-                                <path d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z" />
+                                <path
+                                  d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
+                                />
                               </svg>
                             </button>
                           </div>
