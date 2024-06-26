@@ -358,7 +358,7 @@ const SellThroughPage = () => {
                           </div>
                         </div>
                       )}
-                      {loading ? (
+                      {loading ? ( !error && 
                         <div className="flex justify-center">
                           <ThreeDots
                             visible={true}
@@ -371,7 +371,7 @@ const SellThroughPage = () => {
                             wrapperClass=""
                           />
                         </div>
-                      ) : fetched && view === "table" ? (!error &&
+                      ) :  view === "table" ? fetched && (!error &&
                         <div>
                           <table
                             {...getTableProps()}

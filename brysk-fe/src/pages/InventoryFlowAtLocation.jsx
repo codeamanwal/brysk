@@ -19,12 +19,12 @@ const InventoryFlowAtLocation = () => {
   const [view, setView] = useState("table");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [fetched, setFetched] = useState(false); // New state to track if data is fetched
+  const [fetched, setFetched] = useState(false); 
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    setFetched(false); // Set fetched to false while fetching new data
+    setFetched(false); 
     const startDateString = startDate.toISOString().split("T")[0];
     const endDateString = endDate.toISOString().split("T")[0];
 
@@ -33,7 +33,7 @@ const InventoryFlowAtLocation = () => {
         `${process.env.REACT_APP_BACKEND_URL}/inventoryflow?start_date=${startDateString}&end_date=${endDateString}`
       );
       setData(response.data);
-      setFetched(true); // Set fetched to true after data is fetched
+      setFetched(true); 
       console.log("dataFlow", response.data);
     } catch (error) {
       setError(error);
@@ -333,7 +333,7 @@ const InventoryFlowAtLocation = () => {
                           </div>
                         </div>
                       )}
-                      {loading ? (
+                      {loading ? ( !error &&
                         <div className="flex justify-center">
                           <ThreeDots
                             visible={true}

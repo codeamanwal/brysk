@@ -305,7 +305,7 @@ const CustomerSKUPreference = () => {
                           </div>
                         </div>
                       )}
-                      {loading || (!startDate && !endDate) ? (
+                      {loading ? ( !error &&
                         <div className="flex justify-center">
                           <ThreeDots
                             visible={true}

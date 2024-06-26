@@ -467,7 +467,7 @@ const NumberOfBills = () => {
                           </span>
                         </div>
                       )}
-                      {loading || (timePeriod === "date-range" && (!startDate || !endDate)) ? (
+                      {loading || (timePeriod === "date-range" ) ? (
                         <div className="flex justify-center">
                           <ThreeDots
                             visible={true}

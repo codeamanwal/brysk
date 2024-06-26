@@ -7,14 +7,18 @@ import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { DocumentArrowDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import {
+  DocumentArrowDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
 
 const SalesPerLocation = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [view, setView] = useState("table");
   const [timePeriod, setTimePeriod] = useState("day");
   const [dataType, setDataType] = useState("total");
@@ -22,10 +26,13 @@ const SalesPerLocation = () => {
   const [locations, setLocations] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [fetched, setFetched] = useState(false);
 
   useEffect(() => {
-    fetchData();
     fetchLocations();
+    if (timePeriod !== "date-range") {
+      fetchData();
+    }
   }, [timePeriod, dataType]);
 
   useEffect(() => {
@@ -38,8 +45,13 @@ const SalesPerLocation = () => {
     }
 
     setLoading(true);
+    setError(null);
+    setFetched(false);
+
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation`;
-    const startDateString = startDate ? startDate.toISOString().split("T")[0] : "";
+    const startDateString = startDate
+      ? startDate.toISOString().split("T")[0]
+      : "";
     const endDateString = endDate ? endDate.toISOString().split("T")[0] : "";
 
     switch (dataType) {
@@ -85,14 +97,15 @@ const SalesPerLocation = () => {
 
     try {
       const response = await axios.get(endpoint);
-      const fetchedData = response.data.map(item => ({
+      const fetchedData = response.data.map((item) => ({
         ...item,
         startDate: startDateString,
-        endDate: endDateString
+        endDate: endDateString,
       }));
       console.log("Fetched Data:", fetchedData); // Log the fetched data for debugging
       setData(fetchedData);
       setFilteredData(fetchedData);
+      setFetched(true);
     } catch (error) {
       setError(error);
       console.error(error);
@@ -103,7 +116,9 @@ const SalesPerLocation = () => {
 
   const fetchLocations = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/locations`);
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/locations`
+      );
       setLocations(response.data);
     } catch (error) {
       console.error("Error fetching locations:", error);
@@ -287,7 +302,10 @@ const SalesPerLocation = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.setAttribute("href", url);
-    a.setAttribute("download", `Location_sales_data_${timePeriod}_${dataType}.csv`);
+    a.setAttribute(
+      "download",
+      `Location_sales_data_${timePeriod}_${dataType}.csv`
+    );
     a.click();
   };
 
@@ -313,7 +331,9 @@ const SalesPerLocation = () => {
         <button
           key={i}
           onClick={() => gotoPage(i - 1)}
-          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${pageIndex === i - 1 ? 'bg-gray-600 text-white' : ''}`}
+          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+            pageIndex === i - 1 ? "bg-gray-600 text-white" : ""
+          }`}
         >
           {i}
         </button>
@@ -326,20 +346,28 @@ const SalesPerLocation = () => {
           <>
             <button
               onClick={() => gotoPage(0)}
-              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${pageIndex === 0 ? 'bg-gray-600 text-white' : ''}`}
+              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                pageIndex === 0 ? "bg-gray-600 text-white" : ""
+              }`}
             >
               1
             </button>
-            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">...</span>
+            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+              ...
+            </span>
           </>
         )}
         {pages}
         {endPage < pageCount && (
           <>
-            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">...</span>
+            <span className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">
+              ...
+            </span>
             <button
               onClick={() => gotoPage(pageCount - 1)}
-              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${pageIndex === pageCount - 1 ? 'bg-gray-600 text-white' : ''}`}
+              className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                pageIndex === pageCount - 1 ? "bg-gray-600 text-white" : ""
+              }`}
             >
               {pageCount}
             </button>
@@ -430,9 +458,7 @@ const SalesPerLocation = () => {
                             <option value="sku">SKU wise</option>
                           </select>
                         </label>
-
                         <CityFilter onCityChange={handleCityChange} />
-
                         {timePeriod === "date-range" && (
                           <div className="mt-4">
                             <label>
@@ -444,6 +470,7 @@ const SalesPerLocation = () => {
                                 startDate={startDate}
                                 endDate={endDate}
                                 className="p-1 border"
+                                dateFormat="yyyy-MM-dd"
                                 popperPlacement="bottom-start"
                               />
                             </label>
@@ -457,6 +484,7 @@ const SalesPerLocation = () => {
                                 endDate={endDate}
                                 minDate={startDate}
                                 className="p-1 border"
+                                dateFormat="yyyy-MM-dd"
                                 popperPlacement="bottom-start"
                               />
                             </label>
@@ -472,25 +500,35 @@ const SalesPerLocation = () => {
                         )}
                       </div>
                       {error && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                          <strong className="font-bold">Oops! Something went wrong.</strong>
-                          <span className="block sm:inline">We encountered an issue while fetching the data. Please try again later.</span>
-                          <span
-                            className="absolute top-0 bottom-0 right-0 px-4 py-3"
-                            onClick={() => setError(null)}
-                          >
-                            <svg
-                              className="fill-current h-6 w-6 text-red-500"
-                              role="button"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 20 20"
+                        <div
+                          className="fixed top-4 right-4 w-80 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg transform transition-transform duration-1000 ease-in-out"
+                          role="alert"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <strong className="font-bold">
+                                Oops! Something went wrong.
+                              </strong>
+                              <span className="block sm:inline">
+                                We encountered an issue while fetching the data.
+                                Please try again later.
+                              </span>
+                            </div>
+                            <button
+                              className="ml-4"
+                              onClick={() => setError(null)}
                             >
-                              <title>Close</title>
-                              <path
-                                d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
-                              />
-                            </svg>
-                          </span>
+                              <svg
+                                className="fill-current h-6 w-6 text-red-500"
+                                role="button"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                              >
+                                <title>Close</title>
+                                <path d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       )}
                       {loading ||
@@ -508,109 +546,122 @@ const SalesPerLocation = () => {
                             wrapperClass=""
                           />
                         </div>
-                      ) : view === "table" ? (!error &&
-                        <div>
-                          <table
-                            {...getTableProps()}
-                            className="min-w-full divide-y divide-gray-200 my-5 border"
-                          >
-                            <thead className="bg-gray-50">
-                              {headerGroups.map((headerGroup) => (
-                                <tr {...headerGroup.getHeaderGroupProps()}>
-                                  {headerGroup.headers.map((column) => (
-                                    <th
-                                      {...column.getHeaderProps()}
-                                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                      {column.render("Header")}
-                                    </th>
-                                  ))}
-                                </tr>
-                              ))}
-                            </thead>
-                            <tbody
-                              {...getTableBodyProps()}
-                              className="bg-white divide-y divide-gray-200"
+                      ) : fetched && view === "table" ? (
+                        !error && (
+                          <div>
+                            <table
+                              {...getTableProps()}
+                              className="min-w-full divide-y divide-gray-200 my-5 border"
                             >
-                              {page.map((row, i) => {
-                                prepareRow(row);
-                                return (
-                                  <tr {...row.getRowProps()}>
-                                    {row.cells.map((cell) => {
-                                      return (
-                                        <td
-                                          {...cell.getCellProps()}
-                                          className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                                        >
-                                          {cell.render("Cell")}
-                                        </td>
-                                      );
-                                    })}
+                              <thead className="bg-gray-50">
+                                {headerGroups.map((headerGroup) => (
+                                  <tr {...headerGroup.getHeaderGroupProps()}>
+                                    {headerGroup.headers.map((column) => (
+                                      <th
+                                        {...column.getHeaderProps()}
+                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                      >
+                                        {column.render("Header")}
+                                      </th>
+                                    ))}
                                   </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-                            <div className="flex flex-1 justify-between sm:hidden">
-                              <button
-                                onClick={() => previousPage()}
-                                disabled={!canPreviousPage}
-                                className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                ))}
+                              </thead>
+                              <tbody
+                                {...getTableBodyProps()}
+                                className="bg-white divide-y divide-gray-200"
                               >
-                                Previous
-                              </button>
-                              <button
-                                onClick={() => nextPage()}
-                                disabled={!canNextPage}
-                                className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                              >
-                                Next
-                              </button>
-                            </div>
-                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                              <div>
-                                <p className="text-sm text-gray-700">
-                                  Showing <span className="font-medium">{pageIndex * pageSize + 1}</span> -{" "}
-                                  <span className="font-medium">
-                                    {Math.min((pageIndex + 1) * pageSize, filteredData.length)}
-                                  </span>{" "}
-                                  of <span className="font-medium">{filteredData.length}</span> results
-                                </p>
-                              </div>
-                              <div>
-                                <nav
-                                  className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                                  aria-label="Pagination"
+                                {page.map((row, i) => {
+                                  prepareRow(row);
+                                  return (
+                                    <tr {...row.getRowProps()}>
+                                      {row.cells.map((cell) => {
+                                        return (
+                                          <td
+                                            {...cell.getCellProps()}
+                                            className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                                          >
+                                            {cell.render("Cell")}
+                                          </td>
+                                        );
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                              <div className="flex flex-1 justify-between sm:hidden">
+                                <button
+                                  onClick={() => previousPage()}
+                                  disabled={!canPreviousPage}
+                                  className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                                 >
-                                  <button
-                                    onClick={() => previousPage()}
-                                    disabled={!canPreviousPage}
-                                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                  Previous
+                                </button>
+                                <button
+                                  onClick={() => nextPage()}
+                                  disabled={!canNextPage}
+                                  className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                >
+                                  Next
+                                </button>
+                              </div>
+                              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                <div>
+                                  <p className="text-sm text-gray-700">
+                                    Showing{" "}
+                                    <span className="font-medium">
+                                      {pageIndex * pageSize + 1}
+                                    </span>{" "}
+                                    -{" "}
+                                    <span className="font-medium">
+                                      {Math.min(
+                                        (pageIndex + 1) * pageSize,
+                                        filteredData.length
+                                      )}
+                                    </span>{" "}
+                                    of{" "}
+                                    <span className="font-medium">
+                                      {filteredData.length}
+                                    </span>{" "}
+                                    results
+                                  </p>
+                                </div>
+                                <div>
+                                  <nav
+                                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                    aria-label="Pagination"
                                   >
-                                    <span className="sr-only">Previous</span>
-                                    <ChevronLeftIcon
-                                      className="h-5 w-5"
-                                      aria-hidden="true"
-                                    />
-                                  </button>
-                                  {renderPageNumbers()}
-                                  <button
-                                    onClick={() => nextPage()}
-                                    disabled={!canNextPage}
-                                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                                  >
-                                    <span className="sr-only">Next</span>
-                                    <ChevronRightIcon
-                                      className="h-5 w-5"
-                                      aria-hidden="true"
-                                    />
-                                  </button>
-                                </nav>
+                                    <button
+                                      onClick={() => previousPage()}
+                                      disabled={!canPreviousPage}
+                                      className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                    >
+                                      <span className="sr-only">Previous</span>
+                                      <ChevronLeftIcon
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                    {renderPageNumbers()}
+                                    <button
+                                      onClick={() => nextPage()}
+                                      disabled={!canNextPage}
+                                      className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                    >
+                                      <span className="sr-only">Next</span>
+                                      <ChevronRightIcon
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                      />
+                                    </button>
+                                  </nav>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        )
                       ) : (
                         <div>
                           <p>No Chart</p>
