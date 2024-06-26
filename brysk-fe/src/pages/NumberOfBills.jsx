@@ -481,7 +481,7 @@ const NumberOfBills = () => {
                           />
                         </div>
                       ) : view === "table" ? (
-                        fetched && (
+                        fetched && ( !error &&
                           <div>
                             <table
                               {...getTableProps()}

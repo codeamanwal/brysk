@@ -8,6 +8,8 @@ const inventoryAtLocationRoutes = require('./routes/inventoryAtLocation.js');
 const inventoryFlowRoutes = require('./routes/inventoryFlow.js');
 const numberOfBillsRouter = require('./routes/numberOfBills');
 const inventoryPreference = require('./routes/inventoryPreference')
+const sellThroughRateRoutes = require('./routes/sellThroughRate')
+const customerSKUPreferenceRoutes = require('./routes/customerSKUPreference.js')
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -27,7 +29,8 @@ app.use('/api', inventoryAtLocationRoutes);
 app.use('/api', inventoryFlowRoutes)
 app.use('/api', numberOfBillsRouter)
 app.use('/api', inventoryPreference)
-
+app.use('/api', sellThroughRateRoutes)
+app.use('/api', customerSKUPreferenceRoutes)
 
 app.get("/", async(req, res) => {
   res.send("Welcome!");
