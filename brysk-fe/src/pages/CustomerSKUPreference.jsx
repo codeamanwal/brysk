@@ -6,17 +6,23 @@ import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { DocumentArrowDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import {
+  DocumentArrowDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
 
 const CustomerSKUPreference = () => {
   const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [fetched, setFetched] = useState(false);
-  const [view, setView] = useState('table')
+  const [view, setView] = useState("table");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchData = async () => {
     if (!startDate || !endDate) {
@@ -34,7 +40,9 @@ const CustomerSKUPreference = () => {
 
     try {
       const response = await axios.get(endpoint);
+      console.log(response.data);
       setData(response.data);
+      setFilteredData(response.data);
       setFetched(true);
     } catch (error) {
       setError(error);
@@ -43,10 +51,25 @@ const CustomerSKUPreference = () => {
     }
   };
 
+  useEffect(() => {
+    if (searchQuery === "") {
+      setFilteredData(data);
+    } else {
+      const filtered = data.filter(item =>
+        item.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredData(filtered);
+    }
+  }, [searchQuery, data]);
+
   const generateColumns = () => [
     {
-      Header: "Customer ID",
-      accessor: "userId",
+      Header: "Customer name",
+      accessor: "displayName",
+    },
+    {
+      Header: "Phone no",
+      accessor: "phoneNumber",
     },
     {
       Header: "SKU ID",
@@ -82,7 +105,7 @@ const CustomerSKUPreference = () => {
   } = useTable(
     {
       columns,
-      data,
+      data: filteredData,
       initialState: { pageIndex: 0, pageSize: 10 },
     },
     usePagination
@@ -93,7 +116,7 @@ const CustomerSKUPreference = () => {
     const headers = columns.map((col) => col.Header);
     csvRows.push(headers.join(","));
 
-    data.forEach((row) => {
+    filteredData.forEach((row) => {
       const values = columns.map((col) => {
         const value = row[col.accessor];
         return `"${value !== undefined && value !== null ? value : "N/A"}"`;
@@ -236,43 +259,52 @@ const CustomerSKUPreference = () => {
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 pb-2">
                     <div className="inline-block min-w-full py-2 align-middle">
                       <div className="my-4 grid lg:grid-cols-3 items-center">
-                      <div>
-                        <label>
-                          Start Date:
-                          <DatePicker
-                            selected={startDate}
-                            onChange={(date) => setStartDate(date)}
-                            selectsStart
-                            startDate={startDate}
-                            endDate={endDate}
-                            className="p-1 border"
-                            dateFormat="yyyy-MM-dd"
-                            popperPlacement="bottom-start"
-                          />
-                        </label>
-                        <label className="mt-2 lg:mt-0">
-                          End Date:
-                          <DatePicker
-                            selected={endDate}
-                            onChange={(date) => setEndDate(date)}
-                            selectsEnd
-                            startDate={startDate}
-                            endDate={endDate}
-                            minDate={startDate}
-                            className="p-1 border"
-                            dateFormat="yyyy-MM-dd"
-                            popperPlacement="bottom-start"
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"
-                          onClick={fetchData}
-                          disabled={!startDate || !endDate}
-                        >
-                          Fetch Data
-                        </button>
+                        <div>
+                          <label>
+                            Start Date:
+                            <DatePicker
+                              selected={startDate}
+                              onChange={(date) => setStartDate(date)}
+                              selectsStart
+                              startDate={startDate}
+                              endDate={endDate}
+                              className="p-1 border"
+                              dateFormat="yyyy-MM-dd"
+                              popperPlacement="bottom-start"
+                            />
+                          </label>
+                          <label className="mt-2 lg:mt-0">
+                            End Date:
+                            <DatePicker
+                              selected={endDate}
+                              onChange={(date) => setEndDate(date)}
+                              selectsEnd
+                              startDate={startDate}
+                              endDate={endDate}
+                              minDate={startDate}
+                              className="p-1 border"
+                              dateFormat="yyyy-MM-dd"
+                              popperPlacement="bottom-start"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"
+                            onClick={fetchData}
+                            disabled={!startDate || !endDate}
+                          >
+                            Fetch Data
+                          </button>
                         </div>
+                      </div>
+                      <div className="mt-4">
+                        <input
+                          type="text"
+                          placeholder="Search by Customer Name"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="p-2 border rounded w-full"
+                        />
                       </div>
                       {error && (
                         <div
@@ -281,9 +313,12 @@ const CustomerSKUPreference = () => {
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <strong className="font-bold">Oops! Something went wrong.</strong>
+                              <strong className="font-bold">
+                                Oops! Something went wrong.
+                              </strong>
                               <span className="block sm:inline">
-                                We encountered an issue while fetching the data. Please try again later.
+                                We encountered an issue while fetching the data.
+                                Please try again later.
                               </span>
                             </div>
                             <button
@@ -297,133 +332,145 @@ const CustomerSKUPreference = () => {
                                 viewBox="0 0 20 20"
                               >
                                 <title>Close</title>
-                                <path
-                                  d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
-                                />
+                                <path d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z" />
                               </svg>
                             </button>
                           </div>
                         </div>
                       )}
-                      {loading ? ( !error &&
-                        <div className="flex justify-center">
-                          <ThreeDots
-                            visible={true}
-                            height="80"
-                            width="80"
-                            color="#000"
-                            radius="9"
-                            ariaLabel="three-dots-loading"
-                            wrapperStyle={{}}
-                            wrapperClass=""
-                          />
-                        </div>
-                      ) : (
-                        fetched && ( !error &&
-                          <div>
-                            <table
-                              {...getTableProps()}
-                              className="min-w-full divide-y divide-gray-200 my-5 border"
-                            >
-                              <thead className="bg-gray-50">
-                                {headerGroups.map((headerGroup) => (
-                                  <tr {...headerGroup.getHeaderGroupProps()}>
-                                    {headerGroup.headers.map((column) => (
-                                      <th
-                                        {...column.getHeaderProps()}
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                      >
-                                        {column.render("Header")}
-                                      </th>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </thead>
-                              <tbody
-                                {...getTableBodyProps()}
-                                className="bg-white divide-y divide-gray-200"
+                      {loading
+                        ? !error && (
+                            <div className="flex justify-center">
+                              <ThreeDots
+                                visible={true}
+                                height="80"
+                                width="80"
+                                color="#000"
+                                radius="9"
+                                ariaLabel="three-dots-loading"
+                                wrapperStyle={{}}
+                                wrapperClass=""
+                              />
+                            </div>
+                          )
+                        : fetched &&
+                          !error && (
+                            <div>
+                              <table
+                                {...getTableProps()}
+                                className="min-w-full divide-y divide-gray-200 my-5 border"
                               >
-                                {page.map((row, i) => {
-                                  prepareRow(row);
-                                  return (
-                                    <tr {...row.getRowProps()}>
-                                      {row.cells.map((cell) => {
-                                        return (
-                                          <td
-                                            {...cell.getCellProps()}
-                                            className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                                          >
-                                            {cell.render("Cell")}
-                                          </td>
-                                        );
-                                      })}
+                                <thead className="bg-gray-50">
+                                  {headerGroups.map((headerGroup) => (
+                                    <tr {...headerGroup.getHeaderGroupProps()}>
+                                      {headerGroup.headers.map((column) => (
+                                        <th
+                                          {...column.getHeaderProps()}
+                                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                          {column.render("Header")}
+                                        </th>
+                                      ))}
                                     </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                            <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-                              <div className="flex flex-1 justify-between sm:hidden">
-                                <button
-                                  onClick={() => previousPage()}
-                                  disabled={!canPreviousPage}
-                                  className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                  ))}
+                                </thead>
+                                <tbody
+                                  {...getTableBodyProps()}
+                                  className="bg-white divide-y divide-gray-200"
                                 >
-                                  Previous
-                                </button>
-                                <button
-                                  onClick={() => nextPage()}
-                                  disabled={!canNextPage}
-                                  className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                >
-                                  Next
-                                </button>
-                              </div>
-                              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                <div>
-                                  <p className="text-sm text-gray-700">
-                                    Showing <span className="font-medium">{pageIndex * pageSize + 1}</span> -{" "}
-                                    <span className="font-medium">
-                                      {Math.min((pageIndex + 1) * pageSize, data.length)}
-                                    </span>{" "}
-                                    of <span className="font-medium">{data.length}</span> results
-                                  </p>
-                                </div>
-                                <div>
-                                  <nav
-                                    className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                                    aria-label="Pagination"
+                                  {page.map((row, i) => {
+                                    prepareRow(row);
+                                    return (
+                                      <tr {...row.getRowProps()}>
+                                        {row.cells.map((cell) => {
+                                          return (
+                                            <td
+                                              {...cell.getCellProps()}
+                                              className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                                            >
+                                              {cell.render("Cell")}
+                                            </td>
+                                          );
+                                        })}
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                              <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                                <div className="flex flex-1 justify-between sm:hidden">
+                                  <button
+                                    onClick={() => previousPage()}
+                                    disabled={!canPreviousPage}
+                                    className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                                   >
-                                    <button
-                                      onClick={() => previousPage()}
-                                      disabled={!canPreviousPage}
-                                      className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                    Previous
+                                  </button>
+                                  <button
+                                    onClick={() => nextPage()}
+                                    disabled={!canNextPage}
+                                    className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                  >
+                                    Next
+                                  </button>
+                                </div>
+                                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                  <div>
+                                    <p className="text-sm text-gray-700">
+                                      Showing{" "}
+                                      <span className="font-medium">
+                                        {pageIndex * pageSize + 1}
+                                      </span>{" "}
+                                      -{" "}
+                                      <span className="font-medium">
+                                        {Math.min(
+                                          (pageIndex + 1) * pageSize,
+                                          filteredData.length
+                                        )}
+                                      </span>{" "}
+                                      of{" "}
+                                      <span className="font-medium">
+                                        {filteredData.length}
+                                      </span>{" "}
+                                      results
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <nav
+                                      className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                                      aria-label="Pagination"
                                     >
-                                      <span className="sr-only">Previous</span>
-                                      <ChevronLeftIcon
-                                        className="h-5 w-5"
-                                        aria-hidden="true"
-                                      />
-                                    </button>
-                                    {renderPageNumbers()}
-                                    <button
-                                      onClick={() => nextPage()}
-                                      disabled={!canNextPage}
-                                      className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                                    >
-                                      <span className="sr-only">Next</span>
-                                      <ChevronRightIcon
-                                        className="h-5 w-5"
-                                        aria-hidden="true"
-                                      />
-                                    </button>
-                                  </nav>
+                                      <button
+                                        onClick={() => previousPage()}
+                                        disabled={!canPreviousPage}
+                                        className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                      >
+                                        <span className="sr-only">
+                                          Previous
+                                        </span>
+                                        <ChevronLeftIcon
+                                          className="h-5 w-5"
+                                          aria-hidden="true"
+                                        />
+                                      </button>
+                                      {renderPageNumbers()}
+                                      <button
+                                        onClick={() => nextPage()}
+                                        disabled={!canNextPage}
+                                        className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                      >
+                                        <span className="sr-only">Next</span>
+                                        <ChevronRightIcon
+                                          className="h-5 w-5"
+                                          aria-hidden="true"
+                                        />
+                                      </button>
+                                    </nav>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        )
-                      )}
+                          )}
                     </div>
                   </div>
                 </div>

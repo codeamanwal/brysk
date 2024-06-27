@@ -12,6 +12,7 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
+import CityFilter from "../components/CityFilter";
 
 const InventoryAtLocation = () => {
   const [data, setData] = useState([]);
@@ -20,6 +21,8 @@ const InventoryAtLocation = () => {
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState(null);
   const [view, setView] = useState("table");
+  const [cityId, setCityId] = useState("");
+  const [locations, setLocations] = useState([]);
 
   const fetchData = async () => {
     if (!startDate) {
@@ -41,7 +44,6 @@ const InventoryAtLocation = () => {
       }));
       setData(enrichedData);
       setFilteredData(enrichedData);
-      console.log(enrichedData);
     } catch (error) {
       setError(error);
       console.error(error);
@@ -50,10 +52,43 @@ const InventoryAtLocation = () => {
     }
   };
 
+  const fetchLocations = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/locations`);
+      setLocations(response.data);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  useEffect(() => {
+    filterDataByCity(cityId);
+  }, [cityId, data]);
+
+  const filterDataByCity = (cityId) => {
+    if (!cityId) {
+      setFilteredData(data);
+    } else {
+      const filtered = data.filter((item) => {
+        const location = locations.find((loc) => loc.id === item.locationId);
+        return location && location.cityId === cityId;
+      });
+      setFilteredData(filtered);
+    }
+  };
+
+  const handleCityChange = (newCityId) => {
+    setCityId(newCityId);
+  };
+
   const generateColumns = () => [
     {
-      Header: "Location ID",
-      accessor: "locationId",
+      Header: "Location",
+      accessor: "displayName",
       Cell: ({ value }) => (value ? value : "N/A"),
     },
     {
@@ -272,6 +307,7 @@ const InventoryAtLocation = () => {
                             Fetch Data
                           </button>
                         </label>
+                        <CityFilter onCityChange={handleCityChange} />
                       </div>
                       {error && (
                         <div

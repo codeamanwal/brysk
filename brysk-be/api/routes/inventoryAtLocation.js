@@ -11,6 +11,58 @@ const poolIMS = new Pool({
   port: process.env.IMS_PGPORT,
 });
 
+const poolAdmin = new Pool({
+  host: process.env.ADMIN_PGHOST,
+  user: process.env.ADMIN_PGUSER,
+  password: process.env.ADMIN_PGPASSWORD,
+  database: "oh-admin-api",
+  port: process.env.ADMIN_PGPORT,
+});
+
+const getLocationsWithCities = async () => {
+  const result = await poolAdmin.query(`
+    SELECT
+      L.id,
+      L."displayName",
+      L."cityId",
+      C.name as cityName
+    FROM public."Locations" L
+    JOIN public."Cities" C ON L."cityId" = C.id;
+  `);
+  return result.rows;
+};
+// Helper function to enrich results with display names and sort them
+const enrichWithDisplayNamesAndSort = (rows, locations) => {
+  const locationMap = {};
+  locations.forEach((location) => {
+    locationMap[location.id] = location;
+  });
+
+  const enrichedRows = rows.map((row) => ({
+    ...row,
+    displayName: locationMap[row.locationId]
+      ? locationMap[row.locationId].displayName
+      : "Unknown",
+    cityName: locationMap[row.locationId]
+      ? locationMap[row.locationId].cityName
+      : "Unknown",
+  }));
+
+  return enrichedRows.sort((a, b) =>
+    a.displayName.localeCompare(b.displayName)
+  );
+};
+
+router.use(async (req, res, next) => {
+  try {
+    req.locations = await getLocationsWithCities();
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 // Endpoint to get inventory at location for a specific date
 router.get("/inventory/location-store-warehouse", async (req, res) => {
   const { date } = req.query;
@@ -89,7 +141,11 @@ router.get("/inventory/location-store-warehouse", async (req, res) => {
       ORDER BY ei."locationId", ei."variantId";
     `, [date]);
 
-    res.json(result.rows);
+    const enrichedResult = enrichWithDisplayNamesAndSort(
+      result.rows,
+      req.locations
+    );
+    res.json(enrichedResult);
   } catch (err) {
     console.error("Error fetching inventory data:", err);
     res.status(500).json({ error: "Internal Server Error" });

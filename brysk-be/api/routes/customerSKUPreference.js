@@ -11,6 +11,46 @@ const pool = new Pool({
   port: process.env.ADMIN_PGPORT,
 });
 
+const poolCustomer = new Pool({
+  host: process.env.ADMIN_PGHOST,
+  user: process.env.ADMIN_PGUSER,
+  password: process.env.ADMIN_PGPASSWORD,
+  database: "oh-customer-api",
+  port: process.env.ADMIN_PGPORT,
+});
+
+router.use(async (req, res, next) => {
+  try {
+    const result = await poolCustomer.query(`
+      SELECT id, name, "phoneNumber"
+      FROM public."Users";
+    `);
+    const users = {};
+    result.rows.forEach((row) => {
+      users[row.id] = {
+        name: row.name,
+        phoneNumber: row.phoneNumber,
+      };
+    });
+    req.users = users;
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+const enrichWithDisplayNamesAndSort = (rows, users) => {
+  const enrichedRows = rows.map((row) => ({
+    ...row,
+    displayName: users[row.userId] ? users[row.userId].name : "Unknown",
+    phoneNumber: users[row.userId] ? users[row.userId].phoneNumber : "Unknown",
+  }));
+  return enrichedRows.sort((a, b) =>
+    a.displayName.localeCompare(b.displayName)
+  );
+};
+
 router.get('/customerskupreference', async (req, res) => {
   const { start_date, end_date } = req.query;
 
@@ -52,7 +92,9 @@ router.get('/customerskupreference', async (req, res) => {
       ORDER BY sp."userId", sp."variantId";
     `, [start_date, end_date]);
 
-    res.json(result.rows);
+    const enrichedData = enrichWithDisplayNamesAndSort(result.rows, req.users);
+
+    res.json(enrichedData);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });

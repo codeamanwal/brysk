@@ -40,7 +40,7 @@ const InventoryPreference = () => {
     },
     view === "value"
       ? {
-          Header: "Total Value",
+          Header: "Total Value (INR)",
           accessor: "total_value",
           Cell: ({ value }) => (value ? value.toFixed(3) : "N/A"),
         }
