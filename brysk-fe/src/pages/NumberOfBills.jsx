@@ -131,7 +131,7 @@ const NumberOfBills = () => {
         accessor: "total_bills",
       },
       {
-        Header: "Average Order Value",
+        Header: "Average Order Value (INR)",
         accessor: "average_order_value",
         Cell: ({ value }) =>
           value !== null ? parseFloat(value).toFixed(2) : "N/A",

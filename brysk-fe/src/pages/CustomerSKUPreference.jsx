@@ -72,8 +72,8 @@ const CustomerSKUPreference = () => {
       accessor: "phoneNumber",
     },
     {
-      Header: "SKU ID",
-      accessor: "variantId",
+      Header: "SKU Name",
+      accessor: "variant_name",
     },
     {
       Header: "Times Sold",

@@ -24,10 +24,8 @@ const navigation = [
   {
     name: "Location/Store Analytics",
     children: [
-      { name: "Store Status", href: "/location-status", icon: XMarkIcon },
       { name: "Number of Bills per Location", href: "/bills/location", icon: XMarkIcon },
       { name: "Inventory Preference", href: "/inventory/preference", icon: XMarkIcon },
-      { name: "Demand Forecasting", href: "/demand/forecasting", icon: XMarkIcon },
       { name: "Sell-through Rate", href: "/sell-through-rate", icon: XMarkIcon },
       { name: "Customer SKU Preference", href: "/customer/sku-preference", icon: XMarkIcon },
     ],

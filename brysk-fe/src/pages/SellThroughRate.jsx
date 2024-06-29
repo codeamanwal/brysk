@@ -90,12 +90,12 @@ const SellThroughPage = () => {
 
   const generateColumns = () => [
     {
-      Header: "Location",
-      accessor: "locationId",
+      Header: "Location Name",
+      accessor: "displayName",
     },
     {
-      Header: "Variant",
-      accessor: "variantId",
+      Header: "Variant Name",
+      accessor: "variantName",
     },
     {
       Header: "Received Quantity",

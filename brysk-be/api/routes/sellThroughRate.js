@@ -2,6 +2,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const router = express.Router();
 
+// PostgreSQL connection pool for various APIs
 const poolIms = new Pool({
   host: process.env.ADMIN_PGHOST,
   user: process.env.ADMIN_PGUSER,
@@ -18,11 +19,73 @@ const poolCustomer = new Pool({
   port: process.env.ADMIN_PGPORT,
 });
 
+const poolAdmin = new Pool({
+  host: process.env.ADMIN_PGHOST,
+  user: process.env.ADMIN_PGUSER,
+  password: process.env.ADMIN_PGPASSWORD,
+  database: "oh-admin-api",
+  port: process.env.ADMIN_PGPORT,
+});
+
+const getLocationsWithCities = async () => {
+  const result = await poolAdmin.query(`
+    SELECT
+      L.id,
+      L."displayName",
+      L."cityId",
+      C.name as cityName
+    FROM public."Locations" L
+    JOIN public."Cities" C ON L."cityId" = C.id;
+  `);
+  return result.rows;
+};
+
+const getVariantNames = async () => {
+  const result = await poolAdmin.query(`
+    SELECT
+      id AS "variantId",
+      title AS "variantName"
+    FROM public."Variants";
+  `);
+  return result.rows;
+};
+
+const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
+  const locationMap = {};
+  locations.forEach((location) => {
+    locationMap[location.id] = location;
+  });
+
+  const variantMap = {};
+  variants.forEach((variant) => {
+    variantMap[variant.variantId] = variant.variantName;
+  });
+
+  const enrichedRows = rows.map((row) => ({
+    ...row,
+    displayName: locationMap[row.locationId]
+      ? locationMap[row.locationId].displayName
+      : "Unknown",
+    cityName: locationMap[row.locationId]
+      ? locationMap[row.locationId].cityName
+      : "Unknown",
+    variantName: variantMap[row.variantId]
+      ? variantMap[row.variantId]
+      : "Unknown",
+  }));
+
+  return enrichedRows.sort((a, b) =>
+    a.displayName.localeCompare(b.displayName)
+  );
+};
+
 router.get("/sellthroughrate", async (req, res) => {
   const { start_date, end_date } = req.query;
 
   if (!start_date || !end_date) {
-    return res.status(400).json({ error: "Start date and end date are required" });
+    return res
+      .status(400)
+      .json({ error: "Start date and end date are required" });
   }
 
   try {
@@ -55,8 +118,12 @@ router.get("/sellthroughrate", async (req, res) => {
       SELECT * FROM sold_quantities;
     `;
 
-    const receivedQuantitiesResult = await poolIms.query(receivedQuantitiesQuery, [start_date, end_date]);
-    const soldQuantitiesResult = await poolCustomer.query(soldQuantitiesQuery, [start_date, end_date]);
+    const [receivedQuantitiesResult, soldQuantitiesResult, locations, variants] = await Promise.all([
+      poolIms.query(receivedQuantitiesQuery, [start_date, end_date]),
+      poolCustomer.query(soldQuantitiesQuery, [start_date, end_date]),
+      getLocationsWithCities(),
+      getVariantNames()
+    ]);
 
     const receivedQuantities = receivedQuantitiesResult.rows;
     const soldQuantities = soldQuantitiesResult.rows;
@@ -67,20 +134,23 @@ router.get("/sellthroughrate", async (req, res) => {
       return acc;
     }, {});
 
-    const sellThroughRates = receivedQuantities.map(item => {
+    const sellThroughRates = receivedQuantities.map((item) => {
       const key = `${item.locationId}-${item.variantId}`;
       const sold_qty = soldQuantitiesMap[key] || 0;
-      const sell_through_rate = item.received_qty === 0 ? 0 : (sold_qty / item.received_qty) * 100;
+      const sell_through_rate =
+        item.received_qty === 0 ? 0 : (sold_qty / item.received_qty) * 100;
       return {
         locationId: item.locationId,
         variantId: item.variantId,
         received_qty: item.received_qty,
         sold_qty,
-        sell_through_rate
+        sell_through_rate,
       };
     });
 
-    res.json(sellThroughRates.sort((a, b) => b.sell_through_rate - a.sell_through_rate));
+    const enrichedSellThroughRates = enrichWithDisplayNamesAndSort(sellThroughRates, locations, variants);
+
+    res.json(enrichedSellThroughRates.sort((a, b) => b.sell_through_rate - a.sell_through_rate));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });

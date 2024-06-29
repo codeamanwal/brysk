@@ -35,8 +35,12 @@ const InventoryPreference = () => {
 
   const generateColumns = () => [
     {
-      Header: "Variant ID",
+      Header: "Variant Id",
       accessor: "variantId",
+    },
+    {
+      Header: "Variant Name",
+      accessor: "variant_name",
     },
     view === "value"
       ? {

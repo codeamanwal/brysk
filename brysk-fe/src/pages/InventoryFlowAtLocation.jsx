@@ -11,29 +11,34 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
+import CityFilter from "../components/CityFilter";
 
 const InventoryFlowAtLocation = () => {
   const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState("table");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [fetched, setFetched] = useState(false); 
+  const [fetched, setFetched] = useState(false);
+  const [cityId, setCityId] = useState("");
+  const [locations, setLocations] = useState([]);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    setFetched(false); 
-    const startDateString = startDate.toISOString().split("T")[0];
-    const endDateString = endDate.toISOString().split("T")[0];
+    setFetched(false);
+    const startDateString = startDate ? startDate.toISOString().split("T")[0] : "";
+    const endDateString = endDate ? endDate.toISOString().split("T")[0] : "";
 
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_BACKEND_URL}/inventoryflow?start_date=${startDateString}&end_date=${endDateString}`
       );
       setData(response.data);
-      setFetched(true); 
+      setFilteredData(response.data);
+      setFetched(true);
       console.log("dataFlow", response.data);
     } catch (error) {
       setError(error);
@@ -43,15 +48,50 @@ const InventoryFlowAtLocation = () => {
     }
   };
 
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  useEffect(() => {
+    filterDataByCity(cityId);
+  }, [cityId, data]);
+
+  const fetchLocations = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/locations`
+      );
+      setLocations(response.data);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+    }
+  };
+
+  const filterDataByCity = (cityId) => {
+    if (!cityId) {
+      setFilteredData(data);
+    } else {
+      const filtered = data.filter((item) => {
+        const location = locations.find((loc) => loc.id === item.locationId);
+        return location && location.cityId === cityId;
+      });
+      setFilteredData(filtered);
+    }
+  };
+
+  const handleCityChange = (newCityId) => {
+    setCityId(newCityId);
+  };
+
   const generateColumns = () => [
     {
-      Header: "Location",
-      accessor: "locationId",
+      Header: "Location Name",
+      accessor: "locationName",
       Cell: ({ value }) => (value ? value : "N/A"),
     },
     {
-      Header: "Variant",
-      accessor: "variantId",
+      Header: "Variant Name",
+      accessor: "variantName",
       Cell: ({ value }) => (value ? value : "N/A"),
     },
     {
@@ -112,7 +152,7 @@ const InventoryFlowAtLocation = () => {
   } = useTable(
     {
       columns,
-      data,
+      data: filteredData,
       initialState: { pageIndex: 0, pageSize: 10 },
     },
     usePagination
@@ -123,7 +163,7 @@ const InventoryFlowAtLocation = () => {
     const headers = columns.map((col) => col.Header);
     csvRows.push(headers.join(","));
 
-    data.forEach((row) => {
+    filteredData.forEach((row) => {
       const values = columns.map((col) => {
         const value = row[col.accessor];
         return `"${value !== undefined && value !== null ? value : "N/A"}"`;
@@ -265,43 +305,46 @@ const InventoryFlowAtLocation = () => {
                 <div className="flow-root">
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 pb-2">
                     <div className="inline-block min-w-full py-2 align-middle">
-                      <div className="my-4">
-                        <label>
-                          Start Date:
-                          <DatePicker
-                            selected={startDate}
-                            onChange={(date) => setStartDate(date)}
-                            selectsStart
-                            startDate={startDate}
-                            endDate={endDate}
-                            className="p-1 border"
-                            dateFormat="yyyy-MM-dd"
-                            popperPlacement="bottom-start"
-                          />
-                        </label>
-                        <label>
-                          End Date:
-                          <DatePicker
-                            selected={endDate}
-                            onChange={(date) => setEndDate(date)}
-                            selectsEnd
-                            startDate={startDate}
-                            endDate={endDate}
-                            minDate={startDate}
-                            className="p-1 border"
-                            dateFormat="yyyy-MM-dd"
-                            popperPlacement="bottom-start"
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"
-                          onClick={fetchData}
-                          disabled={!startDate || !endDate}
-                        >
-                          Fetch Data
-                        </button>
+                      <div className="my-4 grid lg:grid-cols-3 items-center">
+                        <div className="">
+                          <label>
+                            Start Date:
+                            <DatePicker
+                              selected={startDate}
+                              onChange={(date) => setStartDate(date)}
+                              selectsStart
+                              startDate={startDate}
+                              endDate={endDate}
+                              className="p-1 border"
+                              dateFormat="yyyy-MM-dd"
+                              popperPlacement="bottom-start"
+                            />
+                          </label>
+                          <label>
+                            End Date:
+                            <DatePicker
+                              selected={endDate}
+                              onChange={(date) => setEndDate(date)}
+                              selectsEnd
+                              startDate={startDate}
+                              endDate={endDate}
+                              minDate={startDate}
+                              className="p-1 border"
+                              dateFormat="yyyy-MM-dd"
+                              popperPlacement="bottom-start"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"
+                            onClick={fetchData}
+                            disabled={!startDate || !endDate}
+                          >
+                            Fetch Data
+                          </button>
+                        </div>
                       </div>
+                      <CityFilter onCityChange={handleCityChange} />
                       {error && (
                         <div
                           className="fixed top-4 right-4 w-80 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg transform transition-transform duration-1000 ease-in-out"
@@ -333,7 +376,7 @@ const InventoryFlowAtLocation = () => {
                           </div>
                         </div>
                       )}
-                      {loading ? ( !error &&
+                      {loading ? (
                         <div className="flex justify-center">
                           <ThreeDots
                             visible={true}

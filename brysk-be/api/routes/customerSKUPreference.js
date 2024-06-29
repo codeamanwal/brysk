@@ -1,13 +1,17 @@
 const express = require('express');
 const { Pool } = require('pg');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
 const router = express.Router();
 
 // PostgreSQL connection pool
-const pool = new Pool({
+const poolAdmin = new Pool({
   host: process.env.ADMIN_PGHOST,
   user: process.env.ADMIN_PGUSER,
   password: process.env.ADMIN_PGPASSWORD,
-  database: process.env.ADMIN_PGDATABASE,
+  database: "oh-admin-api",
   port: process.env.ADMIN_PGPORT,
 });
 
@@ -19,32 +23,40 @@ const poolCustomer = new Pool({
   port: process.env.ADMIN_PGPORT,
 });
 
-router.use(async (req, res, next) => {
-  try {
-    const result = await poolCustomer.query(`
-      SELECT id, name, "phoneNumber"
-      FROM public."Users";
-    `);
-    const users = {};
-    result.rows.forEach((row) => {
-      users[row.id] = {
-        name: row.name,
-        phoneNumber: row.phoneNumber,
-      };
-    });
-    req.users = users;
-    next();
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
+const fetchVariantNames = async () => {
+  const result = await poolAdmin.query(`
+    SELECT
+      id AS "variantId",
+      title AS "variant_name"
+    FROM public."Variants"
+  `);
+  return result.rows.reduce((acc, row) => {
+    acc[row.variantId] = row.variant_name;
+    return acc;
+  }, {});
+};
 
-const enrichWithDisplayNamesAndSort = (rows, users) => {
+const fetchUserData = async () => {
+  const result = await poolCustomer.query(`
+    SELECT id, name, "phoneNumber"
+    FROM public."Users";
+  `);
+  const users = {};
+  result.rows.forEach((row) => {
+    users[row.id] = {
+      name: row.name,
+      phoneNumber: row.phoneNumber,
+    };
+  });
+  return users;
+};
+
+const enrichWithDisplayNamesAndSort = (rows, users, variants) => {
   const enrichedRows = rows.map((row) => ({
     ...row,
     displayName: users[row.userId] ? users[row.userId].name : "Unknown",
     phoneNumber: users[row.userId] ? users[row.userId].phoneNumber : "Unknown",
+    variant_name: variants[row.variantId] ? variants[row.variantId] : "Unknown",
   }));
   return enrichedRows.sort((a, b) =>
     a.displayName.localeCompare(b.displayName)
@@ -59,7 +71,12 @@ router.get('/customerskupreference', async (req, res) => {
   }
 
   try {
-    const result = await pool.query(`
+    const [users, variants] = await Promise.all([
+      fetchUserData(),
+      fetchVariantNames(),
+    ]);
+
+    const result = await poolCustomer.query(`
       WITH sku_sold AS (
         SELECT
           OI."variantId",
@@ -92,7 +109,7 @@ router.get('/customerskupreference', async (req, res) => {
       ORDER BY sp."userId", sp."variantId";
     `, [start_date, end_date]);
 
-    const enrichedData = enrichWithDisplayNamesAndSort(result.rows, req.users);
+    const enrichedData = enrichWithDisplayNamesAndSort(result.rows, users, variants);
 
     res.json(enrichedData);
   } catch (err) {

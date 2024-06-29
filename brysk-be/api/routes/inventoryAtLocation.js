@@ -7,7 +7,7 @@ const poolIMS = new Pool({
   host: process.env.IMS_PGHOST,
   user: process.env.IMS_PGUSER,
   password: process.env.IMS_PGPASSWORD,
-  database: process.env.IMS_PGDATABASE,
+  database: "oh-ims-api",
   port: process.env.IMS_PGPORT,
 });
 
@@ -31,11 +31,27 @@ const getLocationsWithCities = async () => {
   `);
   return result.rows;
 };
-// Helper function to enrich results with display names and sort them
-const enrichWithDisplayNamesAndSort = (rows, locations) => {
+
+const getVariantNames = async () => {
+  const result = await poolAdmin.query(`
+    SELECT
+      id AS "variantId",
+      title AS "variantName"
+    FROM public."Variants";
+  `);
+  return result.rows;
+};
+
+// Helper function to enrich results with display names, city names, and variant names, and sort them
+const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
   const locationMap = {};
   locations.forEach((location) => {
     locationMap[location.id] = location;
+  });
+
+  const variantMap = {};
+  variants.forEach((variant) => {
+    variantMap[variant.variantId] = variant.variantName;
   });
 
   const enrichedRows = rows.map((row) => ({
@@ -45,6 +61,9 @@ const enrichWithDisplayNamesAndSort = (rows, locations) => {
       : "Unknown",
     cityName: locationMap[row.locationId]
       ? locationMap[row.locationId].cityName
+      : "Unknown",
+    variantName: variantMap[row.variantId]
+      ? variantMap[row.variantId]
       : "Unknown",
   }));
 
@@ -56,6 +75,7 @@ const enrichWithDisplayNamesAndSort = (rows, locations) => {
 router.use(async (req, res, next) => {
   try {
     req.locations = await getLocationsWithCities();
+    req.variants = await getVariantNames();
     next();
   } catch (err) {
     console.error(err);
@@ -143,7 +163,8 @@ router.get("/inventory/location-store-warehouse", async (req, res) => {
 
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
-      req.locations
+      req.locations,
+      req.variants
     );
     res.json(enrichedResult);
   } catch (err) {
