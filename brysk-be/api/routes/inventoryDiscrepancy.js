@@ -71,9 +71,12 @@ const fetchVariantWeights = async () => {
 const fetchLocationData = async () => {
   const result = await poolAdmin.query(`
     SELECT
-      id AS "locationId",
-      "displayName" AS "location_name"
-    FROM public."Locations"
+      L.id AS "locationId",
+      L."displayName" AS "locationName",
+      L."cityId",
+      C.name AS "cityName"
+    FROM public."Locations" L
+    JOIN public."Cities" C ON L."cityId" = C.id
   `);
   return result.rows;
 };
@@ -112,7 +115,10 @@ const calculateDiscrepancy = async () => {
     const discrepancy = inventory.ims_quantity - sensorQuantity;
 
     return {
-      locationName: location ? location.location_name : 'Unknown',
+      locationId: inventory.locationId,
+      cityId: location ? location.cityId : 'Unknown',
+      cityName: location ? location.cityName : 'Unknown',
+      locationName: location ? location.locationName : 'Unknown',
       variantName: variant ? variant.variant_name : 'Unknown',
       sensorQuantity: sensorQuantity.toFixed(3),
       imsQuantity: inventory.ims_quantity,

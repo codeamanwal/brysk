@@ -19,7 +19,7 @@ const InventoryDiscrepancy = () => {
   const [view, setView] = useState('table');
   const [cityId, setCityId] = useState('');
   const [locations, setLocations] = useState([]);
-  const [fetched, setFetched] = useState(false); // Define the fetched state variable
+  const [fetched, setFetched] = useState(false);
 
   useEffect(() => {
     fetchLocations();
@@ -33,14 +33,13 @@ const InventoryDiscrepancy = () => {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    setFetched(false); // Reset fetched to false before data fetch
+    setFetched(false);
 
     try {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/inventory-discrepancy`);
       setData(response.data);
-      console.log(response.data)
       setFilteredData(response.data);
-      setFetched(true); // Set fetched to true after successful data fetch
+      setFetched(true);
     } catch (error) {
       setError('Failed to fetch discrepancies');
       console.error(error);
@@ -72,7 +71,6 @@ const InventoryDiscrepancy = () => {
 
   const handleCityChange = (newCityId) => {
     setCityId(newCityId);
-    filterDataByCity(newCityId);
   };
 
   const generateColumns = () => [
