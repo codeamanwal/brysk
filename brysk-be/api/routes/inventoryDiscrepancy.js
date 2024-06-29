@@ -112,10 +112,10 @@ const calculateDiscrepancy = async () => {
     const discrepancy = inventory.ims_quantity - sensorQuantity;
 
     return {
-      location_name: location ? location.location_name : 'Unknown',
-      variant_name: variant ? variant.variant_name : 'Unknown',
-      sensor_quantity: sensorQuantity.toFixed(3),
-      ims_quantity: inventory.ims_quantity,
+      locationName: location ? location.location_name : 'Unknown',
+      variantName: variant ? variant.variant_name : 'Unknown',
+      sensorQuantity: sensorQuantity.toFixed(3),
+      imsQuantity: inventory.ims_quantity,
       discrepancy: discrepancy.toFixed(3),
     };
   });
