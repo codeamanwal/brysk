@@ -1,34 +1,9 @@
-import React, { useEffect, useRef } from "react";
-import flatpickr from "flatpickr";
-import "flatpickr/dist/flatpickr.min.css";
+// DatePickerRange.jsx
+import React from "react";
 
-const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChange }) => {
-  const startRef = useRef(null);
-  const endRef = useRef(null);
-
-  useEffect(() => {
-    const startPicker = flatpickr(startRef.current, {
-      dateFormat: "Y-m-d",
-      onChange: (selectedDates) => {
-        onStartDateChange(selectedDates[0]);
-      },
-    });
-
-    const endPicker = flatpickr(endRef.current, {
-      dateFormat: "Y-m-d",
-      onChange: (selectedDates) => {
-        onEndDateChange(selectedDates[0]);
-      },
-    });
-
-    return () => {
-      startPicker.destroy();
-      endPicker.destroy();
-    };
-  }, [onStartDateChange, onEndDateChange]);
-
+const DatePickerRange = ({ startDate, endDate, onStartDateChange, onEndDateChange }) => {
   return (
-    <div id="date-range-picker" className="flex items-center">
+    <div id="date-range-picker" date-rangepicker className="flex items-center">
       <div className="relative">
         <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
           <svg
@@ -42,10 +17,11 @@ const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChang
           </svg>
         </div>
         <input
-          ref={startRef}
           id="datepicker-range-start"
           name="start"
-          type="text"
+          type="date"
+          value={startDate || ""}
+          onChange={(e) => onStartDateChange(e.target.value)}
           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           placeholder="Select date start"
         />
@@ -64,10 +40,11 @@ const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChang
           </svg>
         </div>
         <input
-          ref={endRef}
           id="datepicker-range-end"
           name="end"
-          type="text"
+          type="date"
+          value={endDate || ""}
+          onChange={(e) => onEndDateChange(e.target.value)}
           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           placeholder="Select date end"
         />
@@ -76,4 +53,4 @@ const DateRangePicker = ({ startDate, endDate, onStartDateChange, onEndDateChang
   );
 };
 
-export default DateRangePicker;
+export default DatePickerRange;

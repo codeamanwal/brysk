@@ -1,5 +1,6 @@
 const express = require("express");
 const { Pool } = require("pg");
+const { parseISO, format } = require('date-fns');
 const router = express.Router();
 
 // PostgreSQL connection pool for various APIs
@@ -9,6 +10,7 @@ const poolIms = new Pool({
   password: process.env.ADMIN_PGPASSWORD,
   database: "oh-ims-api",
   port: process.env.ADMIN_PGPORT,
+  timezone: 'UTC' // Add the time zone
 });
 
 const poolCustomer = new Pool({
@@ -17,6 +19,7 @@ const poolCustomer = new Pool({
   password: process.env.ADMIN_PGPASSWORD,
   database: "oh-customer-api",
   port: process.env.ADMIN_PGPORT,
+  timezone: 'UTC' // Add the time zone
 });
 
 const poolAdmin = new Pool({
@@ -25,9 +28,11 @@ const poolAdmin = new Pool({
   password: process.env.ADMIN_PGPASSWORD,
   database: "oh-admin-api",
   port: process.env.ADMIN_PGPORT,
+  timezone: 'UTC' // Add the time zone
 });
 
 const getLocationsWithCities = async () => {
+  await poolAdmin.query(`SET TIME ZONE 'UTC'`);
   const result = await poolAdmin.query(`
     SELECT
       L.id,
@@ -41,6 +46,7 @@ const getLocationsWithCities = async () => {
 };
 
 const getVariantNames = async () => {
+  await poolAdmin.query(`SET TIME ZONE 'UTC'`);
   const result = await poolAdmin.query(`
     SELECT
       id AS "variantId",
@@ -74,9 +80,18 @@ const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
       : "Unknown",
   }));
 
-  return enrichedRows.sort((a, b) =>
-    a.displayName.localeCompare(b.displayName)
-  );
+  console.log("Enriched Rows Before Sorting:", JSON.stringify(enrichedRows, null, 2));
+
+  enrichedRows.sort((a, b) => {
+    if (a.sell_through_rate === null && b.sell_through_rate === null) return 0;
+    if (a.sell_through_rate === null) return 1;
+    if (b.sell_through_rate === null) return -1;
+    return b.sell_through_rate - a.sell_through_rate;
+  });
+
+  console.log("Enriched Rows After Sorting:", JSON.stringify(enrichedRows, null, 2));
+
+  return enrichedRows;
 };
 
 router.get("/sellthroughrate", async (req, res) => {
@@ -87,6 +102,10 @@ router.get("/sellthroughrate", async (req, res) => {
       .status(400)
       .json({ error: "Start date and end date are required" });
   }
+
+  // Ensure start_date and end_date are in 'YYYY-MM-DD' format
+  const startDateFormatted = format(parseISO(start_date), 'yyyy-MM-dd');
+  const endDateFormatted = format(parseISO(end_date), 'yyyy-MM-dd');
 
   try {
     const receivedQuantitiesQuery = `
@@ -118,9 +137,12 @@ router.get("/sellthroughrate", async (req, res) => {
       SELECT * FROM sold_quantities;
     `;
 
+    await poolIms.query(`SET TIME ZONE 'UTC'`);
+    await poolCustomer.query(`SET TIME ZONE 'UTC'`);
+
     const [receivedQuantitiesResult, soldQuantitiesResult, locations, variants] = await Promise.all([
-      poolIms.query(receivedQuantitiesQuery, [start_date, end_date]),
-      poolCustomer.query(soldQuantitiesQuery, [start_date, end_date]),
+      poolIms.query(receivedQuantitiesQuery, [startDateFormatted, endDateFormatted]),
+      poolCustomer.query(soldQuantitiesQuery, [startDateFormatted, endDateFormatted]),
       getLocationsWithCities(),
       getVariantNames()
     ]);
@@ -138,7 +160,7 @@ router.get("/sellthroughrate", async (req, res) => {
       const key = `${item.locationId}-${item.variantId}`;
       const sold_qty = soldQuantitiesMap[key] || 0;
       const sell_through_rate =
-        item.received_qty === 0 ? 0 : (sold_qty / item.received_qty) * 100;
+        item.received_qty === 0 ? null : (sold_qty / item.received_qty) * 100;
       return {
         locationId: item.locationId,
         variantId: item.variantId,
@@ -148,9 +170,13 @@ router.get("/sellthroughrate", async (req, res) => {
       };
     });
 
+    // console.log("Sell Through Rates Before Enriching and Sorting:", JSON.stringify(sellThroughRates, null, 2));
+
     const enrichedSellThroughRates = enrichWithDisplayNamesAndSort(sellThroughRates, locations, variants);
 
-    res.json(enrichedSellThroughRates.sort((a, b) => b.sell_through_rate - a.sell_through_rate));
+    // console.log("Final Enriched and Sorted Sell Through Rates:", JSON.stringify(enrichedSellThroughRates, null, 2));
+
+    res.json(enrichedSellThroughRates);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });

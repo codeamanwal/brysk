@@ -3,10 +3,8 @@ import Sidebar from "../components/Sidebar";
 import CityFilter from "../components/CityFilter";
 import axios from "axios";
 import { useTable, usePagination } from "react-table";
-import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import DatePickerRange from "../components/DatePickerRange";
 import {
   DocumentArrowDownIcon,
   ChevronLeftIcon,
@@ -22,9 +20,10 @@ const SellThroughPage = () => {
   const [view, setView] = useState("table");
   const [cityId, setCityId] = useState("");
   const [locations, setLocations] = useState([]);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [fetched, setFetched] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: "sell_through_rate", direction: "descending" });
 
   useEffect(() => {
     fetchLocations();
@@ -39,18 +38,16 @@ const SellThroughPage = () => {
     setError(null);
     setFetched(false);
 
-    const startDateString = startDate.toISOString().split("T")[0];
-    const endDateString = endDate.toISOString().split("T")[0];
-
-    const endpoint = `${process.env.REACT_APP_BACKEND_URL}/sellthroughrate?start_date=${startDateString}&end_date=${endDateString}`;
+    const endpoint = `${process.env.REACT_APP_BACKEND_URL}/sellthroughrate?start_date=${startDate}&end_date=${endDate}`;
+    console.log('end', endpoint)
 
     try {
       const response = await axios.get(endpoint);
-      console.log("", response.data)
+      console.log(response.data)
       const fetchedData = response.data.map((item) => ({
         ...item,
-        startDate: startDateString,
-        endDate: endDateString,
+        startDate,
+        endDate,
       }));
       setData(fetchedData);
       setFilteredData(fetchedData);
@@ -88,27 +85,66 @@ const SellThroughPage = () => {
     filterDataByCity(newCityId);
   };
 
+  const handleStartDateChange = (date) => {
+    setStartDate(date);
+  };
+
+  const handleEndDateChange = (date) => {
+    setEndDate(date);
+  };
+
+  const handleSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedData = React.useMemo(() => {
+    if (!sortConfig.key) return filteredData;
+
+    const sorted = [...filteredData].sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      if (aValue === null) return 1;
+      if (bValue === null) return -1;
+
+      if (aValue < bValue) return sortConfig.direction === "ascending" ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === "ascending" ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [filteredData, sortConfig]);
+
   const generateColumns = () => [
     {
       Header: "Location Name",
       accessor: "displayName",
+      sortType: "basic",
     },
     {
       Header: "Variant Name",
       accessor: "variantName",
+      sortType: "basic",
     },
     {
       Header: "Received Quantity",
       accessor: "received_qty",
+      sortType: "basic",
     },
     {
       Header: "Sold Quantity",
       accessor: "sold_qty",
+      sortType: "basic",
     },
     {
       Header: "Sell Through Rate (%)",
       accessor: "sell_through_rate",
       Cell: ({ value }) => (value !== null ? value.toFixed(2) : "N/A"),
+      sortType: "basic",
     },
   ];
 
@@ -132,7 +168,7 @@ const SellThroughPage = () => {
   } = useTable(
     {
       columns,
-      data: filteredData,
+      data: sortedData,
       initialState: { pageIndex: 0, pageSize: 10 },
     },
     usePagination
@@ -291,30 +327,12 @@ const SellThroughPage = () => {
                         <div></div>
                         <div className="mt-4 lg:mt-0">
                           <label>
-                            Start Date:
-                            <DatePicker
-                              selected={startDate}
-                              onChange={(date) => setStartDate(date)}
-                              selectsStart
+                            Date Range:
+                            <DatePickerRange
                               startDate={startDate}
                               endDate={endDate}
-                              className="p-1 border"
-                              dateFormat="yyyy-MM-dd"
-                              popperPlacement="bottom-start"
-                            />
-                          </label>
-                          <label>
-                            End Date:
-                            <DatePicker
-                              selected={endDate}
-                              onChange={(date) => setEndDate(date)}
-                              selectsEnd
-                              startDate={startDate}
-                              endDate={endDate}
-                              minDate={startDate}
-                              className="p-1 border"
-                              dateFormat="yyyy-MM-dd"
-                              popperPlacement="bottom-start"
+                              onStartDateChange={handleStartDateChange}
+                              onEndDateChange={handleEndDateChange}
                             />
                           </label>
                           <button
@@ -383,9 +401,17 @@ const SellThroughPage = () => {
                                   {headerGroup.headers.map((column) => (
                                     <th
                                       {...column.getHeaderProps()}
-                                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                                      onClick={() => handleSort(column.accessor)}
                                     >
                                       {column.render("Header")}
+                                      {sortConfig.key === column.accessor ? (
+                                        sortConfig.direction === "ascending" ? (
+                                          <span> ↑</span>
+                                        ) : (
+                                          <span> ↓</span>
+                                        )
+                                      ) : null}
                                     </th>
                                   ))}
                                 </tr>
@@ -436,9 +462,9 @@ const SellThroughPage = () => {
                                 <p className="text-sm text-gray-700">
                                   Showing <span className="font-medium">{pageIndex * pageSize + 1}</span> -{" "}
                                   <span className="font-medium">
-                                    {Math.min((pageIndex + 1) * pageSize, filteredData.length)}
+                                    {Math.min((pageIndex + 1) * pageSize, sortedData.length)}
                                   </span>{" "}
-                                  of <span className="font-medium">{filteredData.length}</span> results
+                                  of <span className="font-medium">{sortedData.length}</span> results
                                 </p>
                               </div>
                               <div>
