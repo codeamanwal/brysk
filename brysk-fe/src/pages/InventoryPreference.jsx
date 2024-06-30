@@ -11,6 +11,7 @@ const InventoryPreference = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("value");
+  const [displayMode, setDisplayMode] = useState("table");
 
   useEffect(() => {
     fetchData();
@@ -96,14 +97,28 @@ const InventoryPreference = () => {
                   Inventory Preference - Top 10 SKUs
                 </h2>
                 <div className="mt-3 flex sm:ml-4 sm:mt-0">
-                  <select
-                    value={view}
-                    onChange={(e) => setView(e.target.value)}
-                    className="inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 bg-white text-gray-900"
+                  <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-500 ${
+                      displayMode === "table"
+                        ? "bg-gray-800 text-white"
+                        : "bg-white text-gray-900"
+                    }`}
+                    onClick={() => setDisplayMode("table")}
                   >
-                    <option value="value">Top 10 by Value</option>
-                    <option value="volume">Top 10 by Volume</option>
-                  </select>
+                    Table
+                  </button>
+                  <button
+                    type="button"
+                    className={`ml-3 inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-500 ${
+                      displayMode === "chart"
+                        ? "bg-gray-800 text-white"
+                        : "bg-white text-gray-900"
+                    }`}
+                    onClick={() => setDisplayMode("chart")}
+                  >
+                    Chart
+                  </button>
                   <div
                     className="relative flex items-center cursor-pointer"
                     onClick={downloadCSV}
@@ -122,6 +137,16 @@ const InventoryPreference = () => {
                   </div>
                 </div>
               </div>
+              <div>
+                <select
+                  value={view}
+                  onChange={(e) => setView(e.target.value)}
+                  className="mt-5 inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-100 bg-white text-gray-900"
+                >
+                  <option value="value">Top 10 by Value</option>
+                  <option value="volume">Top 10 by Volume</option>
+                </select>
+              </div>
               {error && (
                 <div
                   className="fixed top-4 right-4 w-80 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg transform transition-transform duration-1000 ease-in-out"
@@ -129,15 +154,15 @@ const InventoryPreference = () => {
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <strong className="font-bold">Oops! Something went wrong.</strong>
+                      <strong className="font-bold">
+                        Oops! Something went wrong.
+                      </strong>
                       <span className="block sm:inline">
-                        We encountered an issue while fetching the data. Please try again later.
+                        We encountered an issue while fetching the data. Please
+                        try again later.
                       </span>
                     </div>
-                    <button
-                      className="ml-4"
-                      onClick={() => setError(null)}
-                    >
+                    <button className="ml-4" onClick={() => setError(null)}>
                       <svg
                         className="fill-current h-6 w-6 text-red-500"
                         role="button"
@@ -145,9 +170,7 @@ const InventoryPreference = () => {
                         viewBox="0 0 20 20"
                       >
                         <title>Close</title>
-                        <path
-                          d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
-                        />
+                        <path d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z" />
                       </svg>
                     </button>
                   </div>
@@ -155,65 +178,73 @@ const InventoryPreference = () => {
               )}
 
               {loading ? (
-                <div className="flex justify-center">
-                  <ThreeDots
-                    visible={true}
-                    height="80"
-                    width="80"
-                    color="#000"
-                    radius="9"
-                    ariaLabel="three-dots-loading"
-                    wrapperStyle={{}}
-                    wrapperClass=""
-                  />
-                </div>
-              ) : ( !error &&
-                <div className="mt-8 flex flex-col">
-                  <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                    <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                        <table
-                          {...getTableProps()}
-                          className="min-w-full divide-y divide-gray-300"
-                        >
-                          <thead className="bg-gray-50">
-                            {headerGroups.map((headerGroup) => (
-                              <tr {...headerGroup.getHeaderGroupProps()}>
-                                {headerGroup.headers.map((column) => (
-                                  <th
-                                    {...column.getHeaderProps()}
-                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                  >
-                                    {column.render("Header")}
-                                  </th>
-                                ))}
-                              </tr>
-                            ))}
-                          </thead>
-                          <tbody
-                            {...getTableBodyProps()}
-                            className="bg-white divide-y divide-gray-200"
+                !error && (
+                  <div className="flex justify-center">
+                    <ThreeDots
+                      visible={true}
+                      height="80"
+                      width="80"
+                      color="#000"
+                      radius="9"
+                      ariaLabel="three-dots-loading"
+                      wrapperStyle={{}}
+                      wrapperClass=""
+                    />
+                  </div>
+                )
+              ) : displayMode === "table" ? (
+                !error && (
+                  <div className="mt-8 flex flex-col">
+                    <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                      <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+                        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                          <table
+                            {...getTableProps()}
+                            className="min-w-full divide-y divide-gray-300"
                           >
-                            {rows.map((row) => {
-                              prepareRow(row);
-                              return (
-                                <tr {...row.getRowProps()}>
-                                  {row.cells.map((cell) => (
-                                    <td
-                                      {...cell.getCellProps()}
-                                      className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                            <thead className="bg-gray-50">
+                              {headerGroups.map((headerGroup) => (
+                                <tr {...headerGroup.getHeaderGroupProps()}>
+                                  {headerGroup.headers.map((column) => (
+                                    <th
+                                      {...column.getHeaderProps()}
+                                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                     >
-                                      {cell.render("Cell")}
-                                    </td>
+                                      {column.render("Header")}
+                                    </th>
                                   ))}
                                 </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                              ))}
+                            </thead>
+                            <tbody
+                              {...getTableBodyProps()}
+                              className="bg-white divide-y divide-gray-200"
+                            >
+                              {rows.map((row) => {
+                                prepareRow(row);
+                                return (
+                                  <tr {...row.getRowProps()}>
+                                    {row.cells.map((cell) => (
+                                      <td
+                                        {...cell.getCellProps()}
+                                        className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                                      >
+                                        {cell.render("Cell")}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
                   </div>
+                )
+              ) : (
+                <div>
+                  <p>No Chart</p>
                 </div>
               )}
             </div>
