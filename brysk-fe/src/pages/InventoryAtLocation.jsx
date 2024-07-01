@@ -290,7 +290,7 @@ const InventoryAtLocation = () => {
                 <div className="flow-root">
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 pb-2">
                     <div className="inline-block min-w-full py-2 align-middle">
-                      <div className="my-4 grid lg:grid-cols-1 items-center">
+                      <div className="my-4 grid lg:grid-cols-3 items-center">
                         <label>
                           Date:
                           <DatePicker
