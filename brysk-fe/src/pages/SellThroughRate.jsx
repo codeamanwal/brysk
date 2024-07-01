@@ -322,9 +322,7 @@ const SellThroughPage = () => {
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 pb-2">
                     <div className="inline-block min-w-full py-2 align-middle">
                       <div className="my-4 grid lg:grid-cols-3 items-center">
-                        <CityFilter onCityChange={handleCityChange} />
-                        <div></div>
-                        <div></div>
+                        
                         <div className="mt-4 lg:mt-0">
                           <label>
                             Date Range:
@@ -344,6 +342,8 @@ const SellThroughPage = () => {
                             Fetch Data
                           </button>
                         </div>
+                        <div></div>
+                        <CityFilter onCityChange={handleCityChange} />
                       </div>
                       {error && (
                         <div
