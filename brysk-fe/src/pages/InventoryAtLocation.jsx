@@ -4,7 +4,7 @@ import axios from "axios";
 import { useTable, usePagination } from "react-table";
 import { format } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
-import DatePicker from "react-datepicker";
+import DatePicker from "../components/DatePicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
   DocumentArrowDownIcon,
@@ -31,14 +31,12 @@ const InventoryAtLocation = () => {
 
     setLoading(true);
     setError(null);
-    const startDateString = startDate
-      ? startDate.toISOString().split("T")[0]
-      : "";
+    const startDateString = startDate ? startDate : ''
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/inventory/location-store-warehouse?date=${startDateString}`;
 
     try {
       const response = await axios.get(endpoint);
-      console.log(response.data)
+      console.log(response.data);
       const enrichedData = response.data.map((item) => ({
         ...item,
         date: startDateString,
@@ -55,7 +53,9 @@ const InventoryAtLocation = () => {
 
   const fetchLocations = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/locations`);
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/locations`
+      );
       setLocations(response.data);
     } catch (error) {
       console.error("Error fetching locations:", error);
@@ -294,8 +294,8 @@ const InventoryAtLocation = () => {
                         <label>
                           Date:
                           <DatePicker
-                            selected={startDate}
-                            onChange={(date) => setStartDate(date)}
+                            selectedDate={startDate}
+                            onDateChange={(date) => setStartDate(date)}
                             className="p-1 border"
                             popperPlacement="bottom-start"
                           />
@@ -317,9 +317,12 @@ const InventoryAtLocation = () => {
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <strong className="font-bold">Oops! Something went wrong.</strong>
+                              <strong className="font-bold">
+                                Oops! Something went wrong.
+                              </strong>
                               <span className="block sm:inline">
-                                We encountered an issue while fetching the data. Please try again later.
+                                We encountered an issue while fetching the data.
+                                Please try again later.
                               </span>
                             </div>
                             <button
@@ -333,9 +336,7 @@ const InventoryAtLocation = () => {
                                 viewBox="0 0 20 20"
                               >
                                 <title>Close</title>
-                                <path
-                                  d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
-                                />
+                                <path d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z" />
                               </svg>
                             </button>
                           </div>

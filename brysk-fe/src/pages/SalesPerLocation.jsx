@@ -5,8 +5,7 @@ import axios from "axios";
 import { useTable, usePagination } from "react-table";
 import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import DatePickerRange from "../components/DatePickerRange";
 import {
   DocumentArrowDownIcon,
   ChevronLeftIcon,
@@ -49,10 +48,8 @@ const SalesPerLocation = () => {
     setFetched(false);
 
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/salesperlocation`;
-    const startDateString = startDate
-      ? startDate.toISOString().split("T")[0]
-      : "";
-    const endDateString = endDate ? endDate.toISOString().split("T")[0] : "";
+    const startDateString = startDate ? startDate : "";
+    const endDateString = endDate ? endDate : "";
 
     switch (dataType) {
       case "total":
@@ -461,33 +458,12 @@ const SalesPerLocation = () => {
                         <CityFilter onCityChange={handleCityChange} />
                         {timePeriod === "date-range" && (
                           <div className="mt-4">
-                            <label>
-                              Start Date:
-                              <DatePicker
-                                selected={startDate}
-                                onChange={(date) => setStartDate(date)}
-                                selectsStart
-                                startDate={startDate}
-                                endDate={endDate}
-                                className="p-1 border"
-                                dateFormat="yyyy-MM-dd"
-                                popperPlacement="bottom-start"
-                              />
-                            </label>
-                            <label>
-                              End Date:
-                              <DatePicker
-                                selected={endDate}
-                                onChange={(date) => setEndDate(date)}
-                                selectsEnd
-                                startDate={startDate}
-                                endDate={endDate}
-                                minDate={startDate}
-                                className="p-1 border"
-                                dateFormat="yyyy-MM-dd"
-                                popperPlacement="bottom-start"
-                              />
-                            </label>
+                            <DatePickerRange
+                              startDate={startDate}
+                              endDate={endDate}
+                              onStartDateChange={setStartDate}
+                              onEndDateChange={setEndDate}
+                            />
                             <button
                               type="button"
                               className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"
@@ -496,6 +472,15 @@ const SalesPerLocation = () => {
                             >
                               Fetch Data
                             </button>
+                            {!fetched && (
+                              <div className="flex justify-between items-start mt-3">
+                                <div>
+                                  <span className="block sm:inline">
+                                    Select a date range to generate data
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -506,9 +491,12 @@ const SalesPerLocation = () => {
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <strong className="font-bold">Oops! Something went wrong.</strong>
+                              <strong className="font-bold">
+                                Oops! Something went wrong.
+                              </strong>
                               <span className="block sm:inline">
-                                We encountered an issue while fetching the data. Please try again later.
+                                We encountered an issue while fetching the data.
+                                Please try again later.
                               </span>
                             </div>
                             <button
@@ -522,9 +510,7 @@ const SalesPerLocation = () => {
                                 viewBox="0 0 20 20"
                               >
                                 <title>Close</title>
-                                <path
-                                  d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
-                                />
+                                <path d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z" />
                               </svg>
                             </button>
                           </div>
@@ -663,7 +649,7 @@ const SalesPerLocation = () => {
                         )
                       ) : (
                         <div>
-                          <p>No Chart</p>
+                         
                         </div>
                       )}
                     </div>

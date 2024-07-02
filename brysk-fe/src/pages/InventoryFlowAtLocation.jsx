@@ -5,6 +5,7 @@ import { useTable, usePagination } from "react-table";
 import { ThreeDots } from "react-loader-spinner";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import DatePickerRange from "../components/DatePickerRange";
 import {
   DocumentArrowDownIcon,
   ChevronLeftIcon,
@@ -29,8 +30,8 @@ const InventoryFlowAtLocation = () => {
     setLoading(true);
     setError(null);
     setFetched(false);
-    const startDateString = startDate ? startDate.toISOString().split("T")[0] : "";
-    const endDateString = endDate ? endDate.toISOString().split("T")[0] : "";
+    const startDateString = startDate ? startDate : "";
+    const endDateString = endDate ? endDate : "";
 
     try {
       const response = await axios.get(
@@ -98,37 +99,49 @@ const InventoryFlowAtLocation = () => {
       Header: "Starting Quantity",
       accessor: "start_qty",
       Cell: ({ value }) =>
-        value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A",
+        value !== null && value !== undefined
+          ? parseFloat(value).toFixed(3)
+          : "N/A",
     },
     {
       Header: "Inward Quantity",
       accessor: "inward_qty",
       Cell: ({ value }) =>
-        value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A",
+        value !== null && value !== undefined
+          ? parseFloat(value).toFixed(3)
+          : "N/A",
     },
     {
       Header: "Sold Quantity",
       accessor: "sold_qty",
       Cell: ({ value }) =>
-        value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A",
+        value !== null && value !== undefined
+          ? parseFloat(value).toFixed(3)
+          : "N/A",
     },
     {
       Header: "Intransit Quantity",
       accessor: "intransit_qty",
       Cell: ({ value }) =>
-        value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A",
+        value !== null && value !== undefined
+          ? parseFloat(value).toFixed(3)
+          : "N/A",
     },
     {
       Header: "Ending Quantity",
       accessor: "end_qty",
       Cell: ({ value }) =>
-        value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A",
+        value !== null && value !== undefined
+          ? parseFloat(value).toFixed(3)
+          : "N/A",
     },
     {
       Header: "Quantity Loss",
       accessor: "qty_loss",
       Cell: ({ value }) =>
-        value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A",
+        value !== null && value !== undefined
+          ? parseFloat(value).toFixed(3)
+          : "N/A",
     },
   ];
 
@@ -305,35 +318,14 @@ const InventoryFlowAtLocation = () => {
                 <div className="flow-root">
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 pb-2">
                     <div className="inline-block min-w-full py-2 align-middle">
-                      <div className="my-4 grid lg:grid-cols-3 items-center">
-                        <div className="">
-                          <label>
-                            Start Date:
-                            <DatePicker
-                              selected={startDate}
-                              onChange={(date) => setStartDate(date)}
-                              selectsStart
-                              startDate={startDate}
-                              endDate={endDate}
-                              className="p-1 border"
-                              dateFormat="yyyy-MM-dd"
-                              popperPlacement="bottom-start"
-                            />
-                          </label>
-                          <label>
-                            End Date:
-                            <DatePicker
-                              selected={endDate}
-                              onChange={(date) => setEndDate(date)}
-                              selectsEnd
-                              startDate={startDate}
-                              endDate={endDate}
-                              minDate={startDate}
-                              className="p-1 border"
-                              dateFormat="yyyy-MM-dd"
-                              popperPlacement="bottom-start"
-                            />
-                          </label>
+                      <div className="my-4 grid lg:grid-cols-3 md:grid-cols-1 items-center">
+                        <div className="mt-4">
+                          <DatePickerRange
+                            startDate={startDate}
+                            endDate={endDate}
+                            onStartDateChange={setStartDate}
+                            onEndDateChange={setEndDate}
+                          />
                           <button
                             type="button"
                             className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"
@@ -343,9 +335,16 @@ const InventoryFlowAtLocation = () => {
                             Fetch Data
                           </button>
                         </div>
+                        <div></div>
                         <CityFilter onCityChange={handleCityChange} />
                       </div>
-                      
+                      {(!fetched && !loading) && <div className="flex justify-between items-start">
+                            <div>
+                              <span className="block sm:inline">
+                               Select a date range to generate data
+                              </span>
+                            </div>
+                      </div>}
                       {error && (
                         <div
                           className="fixed top-4 right-4 w-80 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg transform transition-transform duration-1000 ease-in-out"
@@ -353,9 +352,12 @@ const InventoryFlowAtLocation = () => {
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <strong className="font-bold">Oops! Something went wrong.</strong>
+                              <strong className="font-bold">
+                                Oops! Something went wrong.
+                              </strong>
                               <span className="block sm:inline">
-                                We encountered an issue while fetching the data. Please try again later.
+                                We encountered an issue while fetching the data.
+                                Please try again later.
                               </span>
                             </div>
                             <button
@@ -369,9 +371,7 @@ const InventoryFlowAtLocation = () => {
                                 viewBox="0 0 20 20"
                               >
                                 <title>Close</title>
-                                <path
-                                  d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
-                                />
+                                <path d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z" />
                               </svg>
                             </button>
                           </div>

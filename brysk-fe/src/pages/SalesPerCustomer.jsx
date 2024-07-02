@@ -4,8 +4,7 @@ import axios from "axios";
 import { useTable, usePagination } from "react-table";
 import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import DatePickerRange from "../components/DatePickerRange";
 import { DocumentArrowDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
 
@@ -42,10 +41,8 @@ const SalesPerCustomer = () => {
     setLoading(true);
     setError(null);
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/salespercustomer`;
-    const startDateString = startDate
-      ? startDate.toISOString().split("T")[0]
-      : "";
-    const endDateString = endDate ? endDate.toISOString().split("T")[0] : "";
+    const startDateString = startDate ? startDate : "";
+    const endDateString = endDate ? endDate : "";
 
     switch (dataType) {
       case "total":
@@ -442,31 +439,12 @@ const SalesPerCustomer = () => {
 
                         {timePeriod === "date-range" && (
                           <div className="mt-4">
-                            <label>
-                              Start Date:
-                              <DatePicker
-                                selected={startDate}
-                                onChange={(date) => setStartDate(date)}
-                                selectsStart
-                                startDate={startDate}
-                                endDate={endDate}
-                                className="p-1 border"
-                                popperPlacement="bottom-start"
-                              />
-                            </label>
-                            <label>
-                              End Date:
-                              <DatePicker
-                                selected={endDate}
-                                onChange={(date) => setEndDate(date)}
-                                selectsEnd
-                                startDate={startDate}
-                                endDate={endDate}
-                                minDate={startDate}
-                                className="p-1 border"
-                                popperPlacement="bottom-start"
-                              />
-                            </label>
+                            <DatePickerRange
+                              startDate={startDate}
+                              endDate={endDate}
+                              onStartDateChange={setStartDate}
+                              onEndDateChange={setEndDate}
+                            />
                             <button
                               type="button"
                               className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"

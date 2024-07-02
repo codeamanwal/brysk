@@ -38,6 +38,7 @@ const InventoryDiscrepancy = () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/inventory-discrepancy`);
       setData(response.data);
+      console.log(response.data)
       setFilteredData(response.data);
       setFetched(true);
     } catch (error) {

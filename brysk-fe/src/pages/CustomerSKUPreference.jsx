@@ -4,8 +4,8 @@ import axios from "axios";
 import { useTable, usePagination } from "react-table";
 import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import DatePickerRange from "../components/DatePickerRange";
 import {
   DocumentArrowDownIcon,
   ChevronLeftIcon,
@@ -33,8 +33,8 @@ const CustomerSKUPreference = () => {
     setError(null);
     setFetched(false);
 
-    const startDateString = startDate.toISOString().split("T")[0];
-    const endDateString = endDate.toISOString().split("T")[0];
+    const startDateString = startDate ? startDate : "";
+    const endDateString = endDate ? endDate : "";
 
     const endpoint = `${process.env.REACT_APP_BACKEND_URL}/customerskupreference?start_date=${startDateString}&end_date=${endDateString}`;
 
@@ -55,7 +55,7 @@ const CustomerSKUPreference = () => {
     if (searchQuery === "") {
       setFilteredData(data);
     } else {
-      const filtered = data.filter(item =>
+      const filtered = data.filter((item) =>
         item.displayName.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredData(filtered);
@@ -259,34 +259,13 @@ const CustomerSKUPreference = () => {
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 pb-2">
                     <div className="inline-block min-w-full py-2 align-middle">
                       <div className="my-4 grid lg:grid-cols-3 items-center">
-                        <div>
-                          <label>
-                            Start Date:
-                            <DatePicker
-                              selected={startDate}
-                              onChange={(date) => setStartDate(date)}
-                              selectsStart
-                              startDate={startDate}
-                              endDate={endDate}
-                              className="p-1 border"
-                              dateFormat="yyyy-MM-dd"
-                              popperPlacement="bottom-start"
-                            />
-                          </label>
-                          <label className="mt-2 lg:mt-0">
-                            End Date:
-                            <DatePicker
-                              selected={endDate}
-                              onChange={(date) => setEndDate(date)}
-                              selectsEnd
-                              startDate={startDate}
-                              endDate={endDate}
-                              minDate={startDate}
-                              className="p-1 border"
-                              dateFormat="yyyy-MM-dd"
-                              popperPlacement="bottom-start"
-                            />
-                          </label>
+                        <div className="mt-4">
+                          <DatePickerRange
+                            startDate={startDate}
+                            endDate={endDate}
+                            onStartDateChange={setStartDate}
+                            onEndDateChange={setEndDate}
+                          />
                           <button
                             type="button"
                             className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"
@@ -297,6 +276,15 @@ const CustomerSKUPreference = () => {
                           </button>
                         </div>
                       </div>
+                      {!fetched && (
+                        <div className="flex justify-between items-start mt-3">
+                          <div>
+                            <span className="block sm:inline">
+                              Select a date range to generate data
+                            </span>
+                          </div>
+                        </div>
+                      )}
                       <div className="mt-4">
                         <input
                           type="text"
@@ -306,6 +294,7 @@ const CustomerSKUPreference = () => {
                           className="p-2 border rounded w-full"
                         />
                       </div>
+                      
                       {error && (
                         <div
                           className="fixed top-4 right-4 w-80 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg transform transition-transform duration-1000 ease-in-out"

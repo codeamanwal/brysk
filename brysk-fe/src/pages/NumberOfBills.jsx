@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
 import CityFilter from "../components/CityFilter";
 import axios from "axios";
 import { useTable, usePagination } from "react-table";
 import { format, isValid } from "date-fns";
 import { ThreeDots } from "react-loader-spinner";
-import DatePicker from "react-datepicker";
+import DatePickerRange from "../components/DatePickerRange";
 import "react-datepicker/dist/react-datepicker.css";
 import {
   DocumentArrowDownIcon,
@@ -32,10 +32,8 @@ const NumberOfBills = () => {
   }, []);
 
   useEffect(() => {
-    if (timePeriod !== "date-range") {
-      fetchData();
-    }
-  }, [timePeriod]);
+    fetchData();
+  }, [timePeriod, startDate, endDate]);
 
   useEffect(() => {
     filterDataByCity(cityId);
@@ -50,8 +48,8 @@ const NumberOfBills = () => {
     setError(null);
     setFetched(false);
 
-    const startDateString = startDate ? startDate.toISOString().split("T")[0] : "";
-    const endDateString = endDate ? endDate.toISOString().split("T")[0] : "";
+    const startDateString = startDate ? format(startDate, "yyyy-MM-dd") : "";
+    const endDateString = endDate ? format(endDate, "yyyy-MM-dd") : "";
 
     let endpoint = `${process.env.REACT_APP_BACKEND_URL}/numberofbills`;
 
@@ -74,8 +72,7 @@ const NumberOfBills = () => {
 
     try {
       const response = await axios.get(endpoint);
-      console.log(response.data)
-      const fetchedData = response.data.map(item => ({
+      const fetchedData = response.data.map((item) => ({
         ...item,
         startDate: startDateString,
         endDate: endDateString,
@@ -84,7 +81,7 @@ const NumberOfBills = () => {
       setFilteredData(fetchedData);
       setFetched(true);
     } catch (error) {
-      setError(error);
+      setError("Failed to fetch data");
     } finally {
       setLoading(false);
     }
@@ -92,7 +89,9 @@ const NumberOfBills = () => {
 
   const fetchLocations = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/locations`);
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/locations`
+      );
       setLocations(response.data);
     } catch (error) {
       console.error("Error fetching locations:", error);
@@ -186,12 +185,14 @@ const NumberOfBills = () => {
           {
             Header: "Start Date",
             accessor: "startDate",
-            Cell: ({ value }) => (value ? format(new Date(value), "yyyy-MM-dd") : "N/A"),
+            Cell: ({ value }) =>
+              value ? format(new Date(value), "yyyy-MM-dd") : "N/A",
           },
           {
             Header: "End Date",
             accessor: "endDate",
-            Cell: ({ value }) => (value ? format(new Date(value), "yyyy-MM-dd") : "N/A"),
+            Cell: ({ value }) =>
+              value ? format(new Date(value), "yyyy-MM-dd") : "N/A",
           },
           {
             Header: "Unique Bills",
@@ -202,7 +203,7 @@ const NumberOfBills = () => {
             accessor: "total_bills",
           },
           {
-            Header: "Average Order Value",
+            Header: "Average Order Value (INR)",
             accessor: "average_order_value",
             Cell: ({ value }) =>
               value !== null ? parseFloat(value).toFixed(2) : "N/A",
@@ -216,7 +217,7 @@ const NumberOfBills = () => {
     return columns;
   };
 
-  const columns = React.useMemo(generateColumns, [timePeriod]);
+  const columns = useMemo(generateColumns, [timePeriod]);
 
   const {
     getTableProps,
@@ -407,33 +408,12 @@ const NumberOfBills = () => {
                         <div></div>
                         {timePeriod === "date-range" && (
                           <div className="mt-4">
-                            <label>
-                              Start Date:
-                              <DatePicker
-                                selected={startDate}
-                                onChange={(date) => setStartDate(date)}
-                                selectsStart
-                                startDate={startDate}
-                                endDate={endDate}
-                                className="p-1 border"
-                                dateFormat="yyyy-MM-dd"
-                                popperPlacement="bottom-start"
-                              />
-                            </label>
-                            <label>
-                              End Date:
-                              <DatePicker
-                                selected={endDate}
-                                onChange={(date) => setEndDate(date)}
-                                selectsEnd
-                                startDate={startDate}
-                                endDate={endDate}
-                                minDate={startDate}
-                                className="p-1 border"
-                                dateFormat="yyyy-MM-dd"
-                                popperPlacement="bottom-start"
-                              />
-                            </label>
+                            <DatePickerRange
+                              startDate={startDate}
+                              endDate={endDate}
+                              onStartDateChange={setStartDate}
+                              onEndDateChange={setEndDate}
+                            />
                             <button
                               type="button"
                               className="mt-2 rounded-md px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm bg-gray-800"
@@ -442,6 +422,7 @@ const NumberOfBills = () => {
                             >
                               Fetch Data
                             </button>
+                            
                           </div>
                         )}
                       </div>
@@ -452,9 +433,12 @@ const NumberOfBills = () => {
                         >
                           <div className="flex justify-between items-start">
                             <div>
-                              <strong className="font-bold">Oops! Something went wrong.</strong>
+                              <strong className="font-bold">
+                                Oops! Something went wrong.
+                              </strong>
                               <span className="block sm:inline">
-                                We encountered an issue while fetching the data. Please try again later.
+                                We encountered an issue while fetching the data.
+                                Please try again later.
                               </span>
                             </div>
                             <button
@@ -468,15 +452,13 @@ const NumberOfBills = () => {
                                 viewBox="0 0 20 20"
                               >
                                 <title>Close</title>
-                                <path
-                                  d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
-                                />
+                                <path d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z" />
                               </svg>
                             </button>
                           </div>
                         </div>
                       )}
-                      {loading || (timePeriod === "date-range" ) ? (
+                      {loading || (timePeriod === "date-range" && !fetched) ? (
                         <div className="flex justify-center">
                           <ThreeDots
                             visible={true}
@@ -490,7 +472,8 @@ const NumberOfBills = () => {
                           />
                         </div>
                       ) : view === "table" ? (
-                        fetched && ( !error &&
+                        fetched &&
+                        !error && (
                           <div>
                             <table
                               {...getTableProps()}
@@ -553,11 +536,22 @@ const NumberOfBills = () => {
                               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                                 <div>
                                   <p className="text-sm text-gray-700">
-                                    Showing <span className="font-medium">{pageIndex * pageSize + 1}</span> -{" "}
+                                    Showing{" "}
                                     <span className="font-medium">
-                                      {Math.min((pageIndex + 1) * pageSize, filteredData.length)}
+                                      {pageIndex * pageSize + 1}
                                     </span>{" "}
-                                    of <span className="font-medium">{filteredData.length}</span> results
+                                    -{" "}
+                                    <span className="font-medium">
+                                      {Math.min(
+                                        (pageIndex + 1) * pageSize,
+                                        filteredData.length
+                                      )}
+                                    </span>{" "}
+                                    of{" "}
+                                    <span className="font-medium">
+                                      {filteredData.length}
+                                    </span>{" "}
+                                    results
                                   </p>
                                 </div>
                                 <div>

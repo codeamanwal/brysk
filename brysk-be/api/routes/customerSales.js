@@ -37,7 +37,7 @@ router.use(async (req, res, next) => {
     req.users = users;
     next();
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching users:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -52,6 +52,11 @@ const enrichWithDisplayNamesAndSort = (rows, users) => {
   return enrichedRows.sort((a, b) =>
     a.displayName.localeCompare(b.displayName)
   );
+};
+
+// Function to convert date to ISO 8601 format
+const convertToISO8601 = (dateString) => {
+  return new Date(dateString).toISOString();
 };
 
 // Endpoint for sales per customer by day
@@ -71,7 +76,7 @@ router.get("/salespercustomer/day", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*"); // Explicitly set CORS headers
     res.json(enrichedResult);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching sales per customer by day:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -93,7 +98,7 @@ router.get("/salespercustomer/week", async (req, res) => {
     const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching sales per customer by week:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -115,7 +120,7 @@ router.get("/salespercustomer/month", async (req, res) => {
     const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching sales per customer by month:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -124,6 +129,8 @@ router.get("/salespercustomer/month", async (req, res) => {
 router.get("/salespercustomer/daterange", async (req, res) => {
   const { start_date, end_date } = req.query;
   try {
+    const startDate = convertToISO8601(start_date);
+    const endDate = convertToISO8601(end_date);
     const result = await poolCustomer.query(
       `
       SELECT
@@ -132,15 +139,16 @@ router.get("/salespercustomer/daterange", async (req, res) => {
         MAX(O."orderAt") as latest_order
       FROM public."Orders" O
       WHERE O."orderAt" BETWEEN $1 AND $2
+      AND O.status = 'paid'
       GROUP BY O."userId"
       ORDER BY latest_order DESC;
     `,
-      [start_date, end_date]
+      [startDate, endDate]
     );
     const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching sales per customer by date range:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -164,7 +172,7 @@ router.get("/salespercustomer/sku/day", async (req, res) => {
     const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching SKU wise sales per customer by day:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -189,7 +197,7 @@ router.get("/salespercustomer/sku/week", async (req, res) => {
     const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching SKU wise sales per customer by week:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -214,7 +222,7 @@ router.get("/salespercustomer/sku/month", async (req, res) => {
     const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching SKU wise sales per customer by month:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -223,6 +231,8 @@ router.get("/salespercustomer/sku/month", async (req, res) => {
 router.get("/salespercustomer/sku/daterange", async (req, res) => {
   const { start_date, end_date } = req.query;
   try {
+    const startDate = convertToISO8601(start_date);
+    const endDate = convertToISO8601(end_date);
     const result = await poolCustomer.query(
       `
       SELECT
@@ -233,15 +243,16 @@ router.get("/salespercustomer/sku/daterange", async (req, res) => {
       FROM public."Orders" O
       JOIN public."OrderItems" OI ON O.id = OI."orderId"
       WHERE O."orderAt" BETWEEN $1 AND $2
+      AND O.status = 'paid'
       GROUP BY O."userId", OI."variantId"
       ORDER BY MAX(O."orderAt") DESC;
     `,
-      [start_date, end_date]
+      [startDate, endDate]
     );
     const enrichedResult = enrichWithDisplayNamesAndSort(result.rows, req.users);
     res.json(enrichedResult);
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching SKU wise sales per customer by date range:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
