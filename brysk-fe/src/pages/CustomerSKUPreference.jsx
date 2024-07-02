@@ -276,7 +276,7 @@ const CustomerSKUPreference = () => {
                           </button>
                         </div>
                       </div>
-                      {!fetched && (
+                      {(!fetched && !loading) && (
                         <div className="flex justify-between items-start mt-3">
                           <div>
                             <span className="block sm:inline">

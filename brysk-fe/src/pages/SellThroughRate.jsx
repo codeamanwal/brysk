@@ -345,6 +345,15 @@ const SellThroughPage = () => {
                         <div></div>
                         <CityFilter onCityChange={handleCityChange} />
                       </div>
+                      {( !fetched && !loading) && (
+                        <div className="flex justify-between items-start mt-3">
+                          <div>
+                            <span className="block sm:inline">
+                              Select a date range to generate data
+                            </span>
+                          </div>
+                        </div>
+                      )}
                       {error && (
                         <div
                           className="fixed top-4 right-4 w-80 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg transform transition-transform duration-1000 ease-in-out"

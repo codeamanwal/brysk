@@ -8,26 +8,35 @@ import {
   XMarkIcon,
   Bars3Icon,
   ArrowLeftOnRectangleIcon,
+  MapIcon,
+  UserIcon,
+  BuildingStorefrontIcon,
+  ArrowsRightLeftIcon,
+  ScaleIcon,
+  DocumentTextIcon,
+  ChartBarIcon,
+  ChartPieIcon,
+  TagIcon
 } from "@heroicons/react/24/outline";
 
 const navigation = [
   {
     name: "Sales and Inventory Analytics",
     children: [
-      { name: "Sales per Location/Store", href: "/sales/location-store", icon: XMarkIcon },
-      { name: "Sales per Customer", href: "/sales/customer", icon: XMarkIcon },
-      { name: "Inventory at Location/Store/Warehouse", href: "/inventory/location-store-warehouse", icon: XMarkIcon },
-      { name: "Inventory Flow at Location/Store/Warehouse", href: "/inventory-flow/location-store-warehouse", icon: XMarkIcon },
-      { name: "Weight-Based vs. System Inventory Discrepancy", href: "/inventory/discrepancy", icon: XMarkIcon },
+      { name: "Sales per Location/Store", href: "/sales/location-store", icon: MapIcon },
+      { name: "Sales per Customer", href: "/sales/customer", icon: UserIcon },
+      { name: "Inventory at Location/Store/Warehouse", href: "/inventory/location-store-warehouse", icon: BuildingStorefrontIcon },
+      { name: "Inventory Flow at Location/Store/Warehouse", href: "/inventory-flow/location-store-warehouse", icon: ArrowsRightLeftIcon },
+      { name: "Weight-Based vs. System Inventory Discrepancy", href: "/inventory/discrepancy", icon: ScaleIcon },
     ],
   },
   {
     name: "Location/Store Analytics",
     children: [
-      { name: "Number of Bills per Location", href: "/bills/location", icon: XMarkIcon },
-      { name: "Inventory Preference", href: "/inventory/preference", icon: XMarkIcon },
-      { name: "Sell-through Rate", href: "/sell-through-rate", icon: XMarkIcon },
-      { name: "Customer SKU Preference", href: "/customer/sku-preference", icon: XMarkIcon },
+      { name: "Number of Bills per Location", href: "/bills/location", icon: DocumentTextIcon },
+      { name: "Inventory Preference", href: "/inventory/preference", icon: ChartBarIcon },
+      { name: "Sell-through Rate", href: "/sell-through-rate", icon: ChartPieIcon },
+      { name: "Customer SKU Preference", href: "/customer/sku-preference", icon: TagIcon },
     ],
   },
 ];
