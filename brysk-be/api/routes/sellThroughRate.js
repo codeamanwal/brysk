@@ -80,7 +80,6 @@ const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
       : "Unknown",
   }));
 
-  console.log("Enriched Rows Before Sorting:", JSON.stringify(enrichedRows, null, 2));
 
   enrichedRows.sort((a, b) => {
     if (a.sell_through_rate === null && b.sell_through_rate === null) return 0;
@@ -88,8 +87,6 @@ const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
     if (b.sell_through_rate === null) return -1;
     return b.sell_through_rate - a.sell_through_rate;
   });
-
-  console.log("Enriched Rows After Sorting:", JSON.stringify(enrichedRows, null, 2));
 
   return enrichedRows;
 };
@@ -169,12 +166,6 @@ router.get("/sellthroughrate", async (req, res) => {
         sell_through_rate,
       };
     });
-
-    // console.log("Sell Through Rates Before Enriching and Sorting:", JSON.stringify(sellThroughRates, null, 2));
-
-    const enrichedSellThroughRates = enrichWithDisplayNamesAndSort(sellThroughRates, locations, variants);
-
-    // console.log("Final Enriched and Sorted Sell Through Rates:", JSON.stringify(enrichedSellThroughRates, null, 2));
 
     res.json(enrichedSellThroughRates);
   } catch (err) {
