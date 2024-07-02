@@ -1,7 +1,22 @@
-// DatePickerRange.jsx
 import React from "react";
 
 const DatePickerRange = ({ startDate, endDate, onStartDateChange, onEndDateChange }) => {
+  const handleStartDateChange = (value) => {
+    if (endDate && new Date(value) > new Date(endDate)) {
+      // If start date is after end date, do nothing
+      return;
+    }
+    onStartDateChange(value);
+  };
+
+  const handleEndDateChange = (value) => {
+    if (startDate && new Date(value) < new Date(startDate)) {
+      // If end date is before start date, do nothing
+      return;
+    }
+    onEndDateChange(value);
+  };
+
   return (
     <div id="date-range-picker" date-rangepicker className="flex items-center">
       <div className="relative">
@@ -21,9 +36,10 @@ const DatePickerRange = ({ startDate, endDate, onStartDateChange, onEndDateChang
           name="start"
           type="date"
           value={startDate || ""}
-          onChange={(e) => onStartDateChange(e.target.value)}
+          onChange={(e) => handleStartDateChange(e.target.value)}
           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           placeholder="Select date start"
+          max={endDate || ""}
         />
       </div>
       <span className="mx-4 text-gray-500">to</span>
@@ -44,9 +60,10 @@ const DatePickerRange = ({ startDate, endDate, onStartDateChange, onEndDateChang
           name="end"
           type="date"
           value={endDate || ""}
-          onChange={(e) => onEndDateChange(e.target.value)}
+          onChange={(e) => handleEndDateChange(e.target.value)}
           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           placeholder="Select date end"
+          min={startDate || ""}
         />
       </div>
     </div>

@@ -45,8 +45,21 @@ router.use(async (req, res, next) => {
   }
 });
 
+const fetchVariantNames = async () => {
+  const result = await poolAdmin.query(`
+    SELECT
+      id AS "variantId",
+      title AS "variant_name"
+    FROM public."Variants"
+  `);
+  return result.rows.reduce((acc, row) => {
+    acc[row.variantId] = row.variant_name;
+    return acc;
+  }, {});
+};
+
 // Helper function to enrich results with display names and sort them
-const enrichWithDisplayNamesAndSort = (rows, locations) => {
+const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
   const locationMap = {};
   locations.forEach((location) => {
     locationMap[location.id] = location;
@@ -60,6 +73,7 @@ const enrichWithDisplayNamesAndSort = (rows, locations) => {
     cityName: locationMap[row.locationId]
       ? locationMap[row.locationId].cityName
       : "Unknown",
+    variant_name: variants[row.variantId] ? variants[row.variantId] : "Unknown",
   }));
 
   return enrichedRows.sort((a, b) =>
@@ -67,6 +81,7 @@ const enrichWithDisplayNamesAndSort = (rows, locations) => {
   );
 };
 
+// Endpoint for fetching locations
 router.get("/locations", async (req, res) => {
   try {
     const result = await poolAdmin.query(`
@@ -85,6 +100,7 @@ router.get("/locations", async (req, res) => {
   }
 });
 
+// Endpoint for fetching cities
 router.get("/cities", async (req, res) => {
   try {
     const result = await poolAdmin.query(`
@@ -101,6 +117,7 @@ router.get("/cities", async (req, res) => {
 // Endpoint for sales per location by day
 router.get("/salesperlocation/day", async (req, res) => {
   try {
+    const variants = await fetchVariantNames();
     const result = await poolCustomer.query(`
       SELECT
         O."locationId",
@@ -113,7 +130,8 @@ router.get("/salesperlocation/day", async (req, res) => {
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
-      req.locations
+      req.locations,
+      variants
     );
     res.json(enrichedResult);
   } catch (err) {
@@ -125,6 +143,7 @@ router.get("/salesperlocation/day", async (req, res) => {
 // Endpoint for sales per location by week
 router.get("/salesperlocation/week", async (req, res) => {
   try {
+    const variants = await fetchVariantNames();
     const result = await poolCustomer.query(`
       SELECT
         O."locationId",
@@ -138,7 +157,8 @@ router.get("/salesperlocation/week", async (req, res) => {
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
-      req.locations
+      req.locations,
+      variants
     );
     res.json(enrichedResult);
   } catch (err) {
@@ -150,6 +170,7 @@ router.get("/salesperlocation/week", async (req, res) => {
 // Endpoint for sales per location by month
 router.get("/salesperlocation/month", async (req, res) => {
   try {
+    const variants = await fetchVariantNames();
     const result = await poolCustomer.query(`
       SELECT
         O."locationId",
@@ -163,7 +184,8 @@ router.get("/salesperlocation/month", async (req, res) => {
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
-      req.locations
+      req.locations,
+      variants
     );
     res.json(enrichedResult);
   } catch (err) {
@@ -176,6 +198,7 @@ router.get("/salesperlocation/month", async (req, res) => {
 router.get("/salesperlocation/daterange", async (req, res) => {
   const { start_date, end_date } = req.query;
   try {
+    const variants = await fetchVariantNames();
     const result = await poolCustomer.query(
       `
       SELECT
@@ -189,7 +212,8 @@ router.get("/salesperlocation/daterange", async (req, res) => {
     );
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
-      req.locations
+      req.locations,
+      variants
     );
     res.json(enrichedResult);
   } catch (err) {
@@ -201,6 +225,7 @@ router.get("/salesperlocation/daterange", async (req, res) => {
 // Endpoint for SKU wise sales per location by day
 router.get("/salesperlocation/sku/day", async (req, res) => {
   try {
+    const variants = await fetchVariantNames();
     const result = await poolCustomer.query(`
       SELECT
         O."locationId",
@@ -216,7 +241,8 @@ router.get("/salesperlocation/sku/day", async (req, res) => {
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
-      req.locations
+      req.locations,
+      variants
     );
     res.json(enrichedResult);
   } catch (err) {
@@ -228,6 +254,7 @@ router.get("/salesperlocation/sku/day", async (req, res) => {
 // Endpoint for SKU wise sales per location by week
 router.get("/salesperlocation/sku/week", async (req, res) => {
   try {
+    const variants = await fetchVariantNames();
     const result = await poolCustomer.query(`
       SELECT
         O."locationId",
@@ -244,7 +271,8 @@ router.get("/salesperlocation/sku/week", async (req, res) => {
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
-      req.locations
+      req.locations,
+      variants
     );
     res.json(enrichedResult);
   } catch (err) {
@@ -256,6 +284,7 @@ router.get("/salesperlocation/sku/week", async (req, res) => {
 // Endpoint for SKU wise sales per location by month
 router.get("/salesperlocation/sku/month", async (req, res) => {
   try {
+    const variants = await fetchVariantNames();
     const result = await poolCustomer.query(`
       SELECT
         O."locationId",
@@ -272,7 +301,8 @@ router.get("/salesperlocation/sku/month", async (req, res) => {
     `);
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
-      req.locations
+      req.locations,
+      variants
     );
     res.json(enrichedResult);
   } catch (err) {
@@ -285,6 +315,7 @@ router.get("/salesperlocation/sku/month", async (req, res) => {
 router.get("/salesperlocation/sku/daterange", async (req, res) => {
   const { start_date, end_date } = req.query;
   try {
+    const variants = await fetchVariantNames();
     const result = await poolCustomer.query(
       `
       SELECT
@@ -301,7 +332,8 @@ router.get("/salesperlocation/sku/daterange", async (req, res) => {
     );
     const enrichedResult = enrichWithDisplayNamesAndSort(
       result.rows,
-      req.locations
+      req.locations,
+      variants
     );
     res.json(enrichedResult);
   } catch (err) {
