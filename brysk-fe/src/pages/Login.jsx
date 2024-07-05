@@ -13,7 +13,7 @@ export default function Login() {
     setMessage("");
 
     const response = await fetch(
-      "https://as-api.bryskpaasdev.com/api/sign_in",
+      "https://as-api.oh-niflr.com/api/sign_in",
       {
         method: "POST",
         headers: {
