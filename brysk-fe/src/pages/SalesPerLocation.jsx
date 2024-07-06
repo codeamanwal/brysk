@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import CityFilter from "../components/CityFilter";
-import SalesTable from "../components/SalesTable";
-import SalesChart from "../components/SalesChart";
+import SalesTable from "../components/SalesLocation/SalesTable";
+import SalesChart from "../components/SalesLocation/SalesChart";
 import axios from "axios";
 import { ThreeDots } from "react-loader-spinner";
 import DatePickerRange from "../components/DatePickerRange";

@@ -10,7 +10,7 @@ const poolIms = new Pool({
   password: process.env.ADMIN_PGPASSWORD,
   database: "oh-ims-api",
   port: process.env.ADMIN_PGPORT,
-  timezone: 'UTC' // Add the time zone
+  timezone: 'UTC'
 });
 
 const poolCustomer = new Pool({
@@ -19,7 +19,7 @@ const poolCustomer = new Pool({
   password: process.env.ADMIN_PGPASSWORD,
   database: "oh-customer-api",
   port: process.env.ADMIN_PGPORT,
-  timezone: 'UTC' // Add the time zone
+  timezone: 'UTC'
 });
 
 const poolAdmin = new Pool({
@@ -28,7 +28,7 @@ const poolAdmin = new Pool({
   password: process.env.ADMIN_PGPASSWORD,
   database: "oh-admin-api",
   port: process.env.ADMIN_PGPORT,
-  timezone: 'UTC' // Add the time zone
+  timezone: 'UTC'
 });
 
 const getLocationsWithCities = async () => {
@@ -69,17 +69,10 @@ const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
 
   const enrichedRows = rows.map((row) => ({
     ...row,
-    displayName: locationMap[row.locationId]
-      ? locationMap[row.locationId].displayName
-      : "Unknown",
-    cityName: locationMap[row.locationId]
-      ? locationMap[row.locationId].cityName
-      : "Unknown",
-    variantName: variantMap[row.variantId]
-      ? variantMap[row.variantId]
-      : "Unknown",
+    displayName: locationMap[row.locationId]?.displayName || "Unknown",
+    cityName: locationMap[row.locationId]?.cityName || "Unknown",
+    variantName: variantMap[row.variantId] || "Unknown",
   }));
-
 
   enrichedRows.sort((a, b) => {
     if (a.sell_through_rate === null && b.sell_through_rate === null) return 0;
@@ -100,7 +93,6 @@ router.get("/sellthroughrate", async (req, res) => {
       .json({ error: "Start date and end date are required" });
   }
 
-  // Ensure start_date and end_date are in 'YYYY-MM-DD' format
   const startDateFormatted = format(parseISO(start_date), 'yyyy-MM-dd');
   const endDateFormatted = format(parseISO(end_date), 'yyyy-MM-dd');
 
@@ -156,8 +148,7 @@ router.get("/sellthroughrate", async (req, res) => {
     const sellThroughRates = receivedQuantities.map((item) => {
       const key = `${item.locationId}-${item.variantId}`;
       const sold_qty = soldQuantitiesMap[key] || 0;
-      const sell_through_rate =
-        item.received_qty === 0 ? null : (sold_qty / item.received_qty) * 100;
+      const sell_through_rate = item.received_qty === 0 ? null : (sold_qty / item.received_qty) * 100;
       return {
         locationId: item.locationId,
         variantId: item.variantId,
@@ -167,7 +158,9 @@ router.get("/sellthroughrate", async (req, res) => {
       };
     });
 
-    res.json(enrichedSellThroughRates);
+    const enrichedData = enrichWithDisplayNamesAndSort(sellThroughRates, locations, variants);
+
+    res.json(enrichedData);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal Server Error" });

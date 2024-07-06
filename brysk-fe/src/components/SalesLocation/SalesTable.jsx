@@ -130,12 +130,10 @@ const SalesTable = ({ data, timePeriod, dataType }) => {
     prepareRow,
     canPreviousPage,
     canNextPage,
-    pageOptions,
     pageCount,
     gotoPage,
     nextPage,
     previousPage,
-    setPageSize,
     state: { pageIndex, pageSize },
   } = useTable(
     {

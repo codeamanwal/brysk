@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
-import { useTable } from "react-table";
 import { ThreeDots } from "react-loader-spinner";
 import { DocumentArrowDownIcon } from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
+import InventoryPreferenceTable from "../components/InventoryPreference/InventoryPreferenceTable";
+import InventoryPreferenceChart from "../components/InventoryPreference/InventoryPreferenceChart";
 
 const InventoryPreference = () => {
   const [data, setData] = useState([]);
@@ -55,13 +56,7 @@ const InventoryPreference = () => {
         },
   ];
 
-  const columns = React.useMemo(generateColumns, [view]);
-
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable({
-      columns,
-      data,
-    });
+  const columns = useMemo(generateColumns, [view]);
 
   const downloadCSV = () => {
     const csvRows = [];
@@ -193,59 +188,9 @@ const InventoryPreference = () => {
                   </div>
                 )
               ) : displayMode === "table" ? (
-                !error && (
-                  <div className="mt-8 flex flex-col">
-                    <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                      <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-                        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                          <table
-                            {...getTableProps()}
-                            className="min-w-full divide-y divide-gray-300"
-                          >
-                            <thead className="bg-gray-50">
-                              {headerGroups.map((headerGroup) => (
-                                <tr {...headerGroup.getHeaderGroupProps()}>
-                                  {headerGroup.headers.map((column) => (
-                                    <th
-                                      {...column.getHeaderProps()}
-                                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                      {column.render("Header")}
-                                    </th>
-                                  ))}
-                                </tr>
-                              ))}
-                            </thead>
-                            <tbody
-                              {...getTableBodyProps()}
-                              className="bg-white divide-y divide-gray-200"
-                            >
-                              {rows.map((row) => {
-                                prepareRow(row);
-                                return (
-                                  <tr {...row.getRowProps()}>
-                                    {row.cells.map((cell) => (
-                                      <td
-                                        {...cell.getCellProps()}
-                                        className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-                                      >
-                                        {cell.render("Cell")}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )
+                <InventoryPreferenceTable data={data} columns={columns} />
               ) : (
-                <div>
-                  <p>No Chart</p>
-                </div>
+                <InventoryPreferenceChart data={data} view={view} />
               )}
             </div>
           </div>
