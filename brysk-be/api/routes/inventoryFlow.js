@@ -76,19 +76,15 @@ router.get("/inventoryflow", async (req, res) => {
             $1::date AS start_date, 
             $2::date AS end_date
       ),
-      -- Calculate starting inventory before the date range
+      -- Calculate starting inventory at the beginning of the start_date
       starting_inventory AS (
         SELECT 
             LI."locationId",
             LI."variantId",
-            SUM(CASE 
-                WHEN LIL."type" IN ('inward', 'default') THEN LIL.qty 
-                WHEN LIL."type" = 'outward' THEN -LIL.qty 
-                ELSE 0 
-            END) AS start_qty
+            SUM(LIL."previousQty") AS start_qty
         FROM public."LocationInventories" LI
         JOIN public."LocationInventoryLogs" LIL ON LI.id = LIL."locationInventoryId"
-        WHERE LIL."createdAt"::date < (SELECT start_date FROM date_range)
+        WHERE LIL."createdAt"::date = (SELECT start_date FROM date_range)
         GROUP BY LI."locationId", LI."variantId"
       ),
       -- Calculate movements within the date range
@@ -105,19 +101,15 @@ router.get("/inventoryflow", async (req, res) => {
         WHERE LIL."createdAt"::date BETWEEN (SELECT start_date FROM date_range) AND (SELECT end_date FROM date_range)
         GROUP BY LI."locationId", LI."variantId"
       ),
-      -- Calculate ending inventory at the end of the date range
+      -- Calculate ending inventory at the end of the end_date
       ending_inventory AS (
         SELECT 
             LI."locationId",
             LI."variantId",
-            SUM(CASE 
-                WHEN LIL."type" IN ('inward', 'default') THEN LIL.qty 
-                WHEN LIL."type" = 'outward' THEN -LIL.qty 
-                ELSE 0 
-            END) AS end_qty
+            SUM(LIL."qty") AS end_qty
         FROM public."LocationInventories" LI
         JOIN public."LocationInventoryLogs" LIL ON LI.id = LIL."locationInventoryId"
-        WHERE LIL."createdAt"::date <= (SELECT end_date FROM date_range)
+        WHERE LIL."createdAt"::date = (SELECT end_date FROM date_range)
         GROUP BY LI."locationId", LI."variantId"
       )
       -- Combine everything into the final result
@@ -128,7 +120,8 @@ router.get("/inventoryflow", async (req, res) => {
           COALESCE(im.inward_qty, 0) AS inward_qty,
           COALESCE(im.sold_qty, 0) AS sold_qty,
           COALESCE(im.intransit_qty, 0) AS intransit_qty,
-          (COALESCE(si.start_qty, 0) + COALESCE(im.inward_qty, 0) - COALESCE(im.sold_qty, 0) + COALESCE(im.adjustment_qty, 0)) AS end_qty,
+          COALESCE(im.adjustment_qty, 0) AS adjustment_qty,
+          COALESCE(ei.end_qty, 0) AS end_qty,
           (COALESCE(si.start_qty, 0) + COALESCE(im.inward_qty, 0) - COALESCE(im.sold_qty, 0) + COALESCE(im.adjustment_qty, 0) - COALESCE(ei.end_qty, 0)) AS qty_loss
       FROM starting_inventory si
       LEFT JOIN inventory_movements im ON si."locationId" = im."locationId" AND si."variantId" = im."variantId"
@@ -149,6 +142,7 @@ router.get("/inventoryflow", async (req, res) => {
       adjustment_qty: row.adjustment_qty || 0,
       end_qty: row.end_qty || 0,
       qty_loss: row.qty_loss || 0,
+      inventory_loss_percentage: row.start_qty ? ((row.start_qty - row.inward_qty) / row.start_qty) * 100 : 0
     }));
 
     res.json(enrichedResult);
