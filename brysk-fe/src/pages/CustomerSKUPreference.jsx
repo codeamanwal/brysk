@@ -6,9 +6,7 @@ import { ThreeDots } from "react-loader-spinner";
 import DatePickerRange from "../components/DatePickerRange";
 import CustomerSKUTable from "../components/CustomerSKU/CustomerSKUTable";
 import CustomerSKUChart from "../components/CustomerSKU/CustomerSKUChart";
-import {
-  DocumentArrowDownIcon,
-} from "@heroicons/react/24/solid";
+import { DocumentArrowDownIcon } from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
 
 const CustomerSKUPreference = () => {
@@ -31,10 +29,7 @@ const CustomerSKUPreference = () => {
     setError(null);
     setFetched(false);
 
-    const startDateString = startDate ? startDate : "";
-    const endDateString = endDate ? endDate : "";
-
-    const endpoint = `${process.env.REACT_APP_BACKEND_URL}/customerskupreference?start_date=${startDateString}&end_date=${endDateString}`;
+    const endpoint = `${process.env.REACT_APP_BACKEND_URL}/customerskupreference?start_date=${startDate}&end_date=${endDate}`;
 
     try {
       const response = await axios.get(endpoint);
@@ -60,26 +55,11 @@ const CustomerSKUPreference = () => {
   }, [searchQuery, data]);
 
   const generateColumns = () => [
-    {
-      Header: "Customer name",
-      accessor: "displayName",
-    },
-    {
-      Header: "Phone no",
-      accessor: "phoneNumber",
-    },
-    {
-      Header: "SKU Name",
-      accessor: "variant_name",
-    },
-    {
-      Header: "Times Sold",
-      accessor: "times_sold",
-    },
-    {
-      Header: "Times Picked",
-      accessor: "times_picked",
-    },
+    { Header: "Customer name", accessor: "displayName" },
+    { Header: "Phone no", accessor: "phoneNumber" },
+    { Header: "SKU Name", accessor: "variant_name" },
+    { Header: "Times Sold", accessor: "times_sold" },
+    { Header: "Times Picked", accessor: "times_picked" },
   ];
 
   const columns = React.useMemo(generateColumns, []);
@@ -140,7 +120,7 @@ const CustomerSKUPreference = () => {
         <button
           key={1}
           onClick={() => gotoPage(0)}
-          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0`}
+          className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
         >
           1
         </button>
@@ -188,7 +168,7 @@ const CustomerSKUPreference = () => {
         <button
           key={pageCount}
           onClick={() => gotoPage(pageCount - 1)}
-          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0`}
+          className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
         >
           {pageCount}
         </button>
@@ -358,7 +338,11 @@ const CustomerSKUPreference = () => {
                           renderPageNumbers={renderPageNumbers}
                         />
                       ) : (
-                        <CustomerSKUChart data={filteredData} />
+                        <CustomerSKUChart
+                          data={filteredData}
+                          startDate={startDate}
+                          endDate={endDate}
+                        />
                       )}
                     </div>
                   </div>

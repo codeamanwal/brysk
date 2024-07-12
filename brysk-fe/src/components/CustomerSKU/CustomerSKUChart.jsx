@@ -1,11 +1,18 @@
 import React from "react";
 import { Bar } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const CustomerSKUChart = ({ data }) => {
-  console.log(data)
+const CustomerSKUChart = ({ data, startDate, endDate }) => {
   const labels = data.map((item) => item.displayName);
 
   const chartData = {
@@ -43,10 +50,11 @@ const CustomerSKUChart = ({ data }) => {
           label: function (context) {
             const item = data[context.dataIndex];
             return [
+              `Dates: ${startDate} - ${endDate}`,
               `Times Sold: ${item.times_sold}`,
               `Times Picked: ${item.times_picked}`,
               `Variant Id: ${item.variantId}`,
-              `Variant Name: ${item.variant_name}`
+              `Variant Name: ${item.variant_name}`,
             ];
           },
         },
