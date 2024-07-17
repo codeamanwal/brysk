@@ -36,8 +36,12 @@ const InventoryDiscrepancy = () => {
 
     try {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/inventory-discrepancy`);
-      setData(response.data);
-      setFilteredData(response.data);
+      const transformedData = response.data.map(item => ({
+        ...item,
+        variantAndProductName: `${item.variantName} - (${item.productName})`
+      }));
+      setData(transformedData);
+      setFilteredData(transformedData);
       setFetched(true);
     } catch (error) {
       setError("Failed to fetch discrepancies");
@@ -80,7 +84,7 @@ const InventoryDiscrepancy = () => {
     },
     {
       Header: "Variant",
-      accessor: "variantName",
+      accessor: "variantAndProductName" ,
       Cell: ({ value }) => (value ? value : "N/A"),
     },
     {
