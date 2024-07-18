@@ -37,7 +37,7 @@ const fetchProductNames = async () => {
       "name" AS "productName"
     FROM public."Products"
   `);
-  console.log(result.rows)
+  // console.log(result.rows)
   return result.rows;
 };
 

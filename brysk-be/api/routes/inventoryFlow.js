@@ -24,9 +24,9 @@ const getLocationsWithCities = async () => {
   const result = await poolAdmin.query(`
     SELECT
       L.id,
-      L."displayName" AS locationName,
+      L."displayName" AS "locationName",
       L."cityId",
-      C.name AS cityName
+      C.name AS "cityName"
     FROM public."Locations" L
     JOIN public."Cities" C ON L."cityId" = C.id;
   `);
@@ -36,9 +36,20 @@ const getLocationsWithCities = async () => {
 const getVariantNames = async () => {
   const result = await poolAdmin.query(`
     SELECT
-      id AS variantId,
-      title AS variantName
+      id AS "variantId",
+      title AS "variantName",
+      "productId"
     FROM public."Variants"
+  `);
+  return result.rows;
+};
+
+const getProductNames = async () => {
+  const result = await poolAdmin.query(`
+    SELECT
+      id AS "productId",
+      name AS "productName"
+    FROM public."Products"
   `);
   return result.rows;
 };
@@ -51,23 +62,39 @@ router.get("/inventoryflow", async (req, res) => {
   }
 
   try {
-    const [locations, variants] = await Promise.all([
+    const [locations, variants, products] = await Promise.all([
       getLocationsWithCities(),
       getVariantNames(),
+      getProductNames(),
     ]);
+
+    // Debugging logs to inspect the data
+    console.log("Locations:", locations);
+    console.log("Variants:", variants);
+    console.log("Products:", products);
 
     const locationMap = {};
     locations.forEach((location) => {
       locationMap[location.id] = {
-        locationName: location.locationname,
-        cityName: location.cityname
+        locationName: location.locationName,
+        cityName: location.cityName
       };
+    });
+
+    const productMap = {};
+    products.forEach((product) => {
+      productMap[product.productId] = product.productName;
     });
 
     const variantMap = {};
     variants.forEach((variant) => {
-      variantMap[variant.variantid] = variant.variantname;
+      variantMap[variant.variantId] = {
+        variantName: variant.variantName,
+        productName: productMap[variant.productId] || 'Unknown' // Ensure the productId is correctly mapped
+      };
     });
+
+    console.log("Variant Map:", variantMap); // Check the variant map for correctness
 
     const result = await poolIMS.query(
       `
@@ -135,7 +162,8 @@ router.get("/inventoryflow", async (req, res) => {
       ...row,
       locationName: locationMap[row.locationId]?.locationName || 'Unknown',
       cityName: locationMap[row.locationId]?.cityName || 'Unknown',
-      variantName: variantMap[row.variantId] || 'Unknown',
+      variantName: variantMap[row.variantId]?.variantName || 'Unknown',
+      productName: variantMap[row.variantId]?.productName || 'Unknown',
       inward_qty: row.inward_qty || 0,
       sold_qty: row.sold_qty || 0,
       intransit_qty: row.intransit_qty || 0,

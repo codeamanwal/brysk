@@ -32,8 +32,12 @@ const InventoryFlowAtLocation = () => {
       const response = await axios.get(
         `${process.env.REACT_APP_BACKEND_URL}/inventoryflow?start_date=${startDateString}&end_date=${endDateString}`
       );
-      setData(response.data);
-      setFilteredData(response.data);
+      const transformedData = response.data.map(item => ({
+        ...item,
+        variantAndProductName: ` ${item.productName} - (${item.variantName})`
+      }));
+      setData(transformedData);
+      setFilteredData(transformedData);
       setFetched(true);
       console.log("dataFlow", response.data);
     } catch (error) {
@@ -110,7 +114,7 @@ const InventoryFlowAtLocation = () => {
       },
       {
         Header: "Variant Name",
-        accessor: "variantName",
+        accessor: "variantAndProductName",
         Cell: ({ value }) => (value ? value : "N/A"),
       },
       {
