@@ -38,7 +38,7 @@ const InventoryDiscrepancy = () => {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/inventory-discrepancy`);
       const transformedData = response.data.map(item => ({
         ...item,
-        variantAndProductName: `${item.variantName} - (${item.productName})`
+        variantAndProductName: ` ${item.productName} - (${item.variantName})`
       }));
       setData(transformedData);
       setFilteredData(transformedData);
