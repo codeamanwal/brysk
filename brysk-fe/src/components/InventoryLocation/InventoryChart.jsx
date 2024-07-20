@@ -36,6 +36,16 @@ const InventoryChart = ({ data }) => {
         display: true,
         text: "Inventory At Location/Store/Warehouse",
       },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const item = data[context.dataIndex];
+            return [
+              `Variant ${item.variantAndProductName}`,
+            ]
+          },
+        },
+      },
     },
   };
 

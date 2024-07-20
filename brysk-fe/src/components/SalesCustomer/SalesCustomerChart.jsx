@@ -47,8 +47,8 @@ const SalesCustomerChart = ({ data, timePeriod, dataType }) => {
             const label = context.dataset.label || "";
             const value = context.raw || 0;
             const tooltipText = tooltips[context.dataIndex];
-            const variantText = dataType === "sku" ? `, Variant: ${data[context.dataIndex].variantName}` : "";
-            return `${label}: ${value} (${tooltipText}${variantText})`;
+            const variantText = dataType === "sku" ? `, Variant: ${data[context.dataIndex].variantAndProductName}` : "";
+            return [`${label}: ${value}`, `(${tooltipText}${variantText})`];
           },
         },
       },

@@ -1,6 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const dotenv = require('dotenv');
+const { parseISO, format } = require('date-fns');
 
 dotenv.config();
 
@@ -26,12 +27,17 @@ const poolCustomer = new Pool({
 const fetchVariantNames = async () => {
   const result = await poolAdmin.query(`
     SELECT
-      id AS "variantId",
-      title AS "variant_name"
-    FROM public."Variants"
+      V.id AS "variantId",
+      V.title AS "variant_name",
+      P.name AS "productName"
+    FROM public."Variants" V
+    JOIN public."Products" P ON V."productId" = P.id
   `);
   return result.rows.reduce((acc, row) => {
-    acc[row.variantId] = row.variant_name;
+    acc[row.variantId] = {
+      variant_name: row.variant_name,
+      productName: row.productName,
+    };
     return acc;
   }, {});
 };
@@ -56,7 +62,8 @@ const enrichWithDisplayNamesAndSort = (rows, users, variants) => {
     ...row,
     displayName: users[row.userId] ? users[row.userId].name : "Unknown",
     phoneNumber: users[row.userId] ? users[row.userId].phoneNumber : "Unknown",
-    variant_name: variants[row.variantId] ? variants[row.variantId] : "Unknown",
+    variant_name: variants[row.variantId] ? variants[row.variantId].variant_name : "Unknown",
+    productName: variants[row.variantId] ? variants[row.variantId].productName : "Unknown",
   }));
   return enrichedRows.sort((a, b) =>
     a.displayName.localeCompare(b.displayName)

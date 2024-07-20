@@ -32,7 +32,6 @@ const poolAdmin = new Pool({
 });
 
 const getLocationsWithCities = async () => {
-  await poolAdmin.query(`SET TIME ZONE 'UTC'`);
   const result = await poolAdmin.query(`
     SELECT
       L.id,
@@ -46,14 +45,21 @@ const getLocationsWithCities = async () => {
 };
 
 const getVariantNames = async () => {
-  await poolAdmin.query(`SET TIME ZONE 'UTC'`);
   const result = await poolAdmin.query(`
     SELECT
-      id AS "variantId",
-      title AS "variantName"
-    FROM public."Variants";
+      V.id AS "variantId",
+      V.title AS "variantName",
+      P.name AS "productName"
+    FROM public."Variants" V
+    JOIN public."Products" P ON V."productId" = P.id;
   `);
-  return result.rows;
+  return result.rows.reduce((acc, row) => {
+    acc[row.variantId] = {
+      variantName: row.variantName,
+      productName: row.productName
+    };
+    return acc;
+  }, {});
 };
 
 const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
@@ -62,16 +68,12 @@ const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
     locationMap[location.id] = location;
   });
 
-  const variantMap = {};
-  variants.forEach((variant) => {
-    variantMap[variant.variantId] = variant.variantName;
-  });
-
   const enrichedRows = rows.map((row) => ({
     ...row,
     displayName: locationMap[row.locationId]?.displayName || "Unknown",
     cityName: locationMap[row.locationId]?.cityName || "Unknown",
-    variantName: variantMap[row.variantId] || "Unknown",
+    variantName: variants[row.variantId]?.variantName || "Unknown",
+    productName: variants[row.variantId]?.productName || "Unknown",
   }));
 
   enrichedRows.sort((a, b) => {
@@ -83,6 +85,21 @@ const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
 
   return enrichedRows;
 };
+
+// Middleware to set time zone and load locations and variants
+router.use(async (req, res, next) => {
+  try {
+    await poolAdmin.query(`SET TIME ZONE 'UTC'`);
+    await poolIms.query(`SET TIME ZONE 'UTC'`);
+    await poolCustomer.query(`SET TIME ZONE 'UTC'`);
+    req.locations = await getLocationsWithCities();
+    req.variants = await getVariantNames();
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 router.get("/sellthroughrate", async (req, res) => {
   const { start_date, end_date } = req.query;
@@ -126,14 +143,9 @@ router.get("/sellthroughrate", async (req, res) => {
       SELECT * FROM sold_quantities;
     `;
 
-    await poolIms.query(`SET TIME ZONE 'UTC'`);
-    await poolCustomer.query(`SET TIME ZONE 'UTC'`);
-
-    const [receivedQuantitiesResult, soldQuantitiesResult, locations, variants] = await Promise.all([
+    const [receivedQuantitiesResult, soldQuantitiesResult] = await Promise.all([
       poolIms.query(receivedQuantitiesQuery, [startDateFormatted, endDateFormatted]),
-      poolCustomer.query(soldQuantitiesQuery, [startDateFormatted, endDateFormatted]),
-      getLocationsWithCities(),
-      getVariantNames()
+      poolCustomer.query(soldQuantitiesQuery, [startDateFormatted, endDateFormatted])
     ]);
 
     const receivedQuantities = receivedQuantitiesResult.rows;
@@ -158,7 +170,7 @@ router.get("/sellthroughrate", async (req, res) => {
       };
     });
 
-    const enrichedData = enrichWithDisplayNamesAndSort(sellThroughRates, locations, variants);
+    const enrichedData = enrichWithDisplayNamesAndSort(sellThroughRates, req.locations, req.variants);
 
     res.json(enrichedData);
   } catch (err) {

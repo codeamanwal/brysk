@@ -33,8 +33,13 @@ const CustomerSKUPreference = () => {
 
     try {
       const response = await axios.get(endpoint);
-      setData(response.data);
-      setFilteredData(response.data);
+      console.log(response.data)
+      const transformedData = response.data.map(item => ({
+        ...item,
+        variantAndProductName: ` ${item.productName} - (${item.variant_name})`
+      }));
+      setData(transformedData);
+      setFilteredData(transformedData);
       setFetched(true);
     } catch (error) {
       setError(error);
@@ -57,7 +62,7 @@ const CustomerSKUPreference = () => {
   const generateColumns = () => [
     { Header: "Customer name", accessor: "displayName" },
     { Header: "Phone no", accessor: "phoneNumber" },
-    { Header: "SKU Name", accessor: "variant_name" },
+    { Header: "SKU Name", accessor: "variantAndProductName" },
     { Header: "Times Sold", accessor: "times_sold" },
     { Header: "Times Picked", accessor: "times_picked" },
   ];

@@ -48,6 +48,7 @@ const SellThroughPage = () => {
         ...item,
         startDate,
         endDate,
+        variantAndProductName: ` ${item.productName} - (${item.variantName})`
       }));
       setData(fetchedData);
       setFilteredData(fetchedData);
@@ -127,8 +128,8 @@ const SellThroughPage = () => {
       sortType: "basic",
     },
     {
-      Header: "Variant Name",
-      accessor: "variantName",
+      Header: "Variant",
+      accessor: "variantAndProductName",
       sortType: "basic",
     },
     {

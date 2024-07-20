@@ -33,9 +33,11 @@ const InventoryAtLocation = () => {
 
     try {
       const response = await axios.get(endpoint);
+      console.log(response.data)
       const enrichedData = response.data.map((item) => ({
         ...item,
         date: startDateString,
+        variantAndProductName: ` ${item.productName} - (${item.variantName})`
       }));
       setData(enrichedData);
       setFilteredData(enrichedData);
@@ -89,8 +91,8 @@ const InventoryAtLocation = () => {
       Cell: ({ value }) => (value ? value : "N/A"),
     },
     {
-      Header: "Variant Name",
-      accessor: "variantName",
+      Header: "Variant",
+      accessor: "variantAndProductName",
       Cell: ({ value }) => (value ? value : "N/A"),
     },
     {

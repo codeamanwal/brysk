@@ -38,13 +38,17 @@ const getVariantNames = async () => {
   await poolAdmin.query(`SET TIME ZONE 'UTC'`);
   const result = await poolAdmin.query(`
     SELECT
-      id AS "variantId",
-      title AS "variantName"
-    FROM public."Variants";
+      V.id AS "variantId",
+      V.title AS "variantName",
+      P.name AS "productName"
+    FROM public."Variants" V
+    JOIN public."Products" P ON V."productId" = P.id;
   `);
-  console.log(result.rows)
   return result.rows.reduce((acc, row) => {
-    acc[row.variantId] = row.variantName;
+    acc[row.variantId] = {
+      variantName: row.variantName,
+      productName: row.productName,
+    };
     return acc;
   }, {});
 };
@@ -86,8 +90,9 @@ const enrichWithDisplayNamesAndSort = (rows, users, locations, variants) => {
       ...row,
       displayName: users[row.userId] ? users[row.userId].name : "Unknown",
       phoneNumber: users[row.userId] ? users[row.userId].phoneNumber : "Unknown",
-      cityName: userLocation.cityname || "Unknown",
-      variantName: variants[row.variantId] || "Unknown",
+      cityName: userLocation.cityName || "Unknown",
+      variantName: variants[row.variantId] ? variants[row.variantId].variantName : "Unknown",
+      productName: variants[row.variantId] ? variants[row.variantId].productName : "Unknown",
     };
   });
 

@@ -19,6 +19,7 @@ const poolAdmin = new Pool({
   port: process.env.ADMIN_PGPORT,
 });
 
+// Function to get locations with city information
 const getLocationsWithCities = async () => {
   const result = await poolAdmin.query(`
     SELECT
@@ -35,11 +36,19 @@ const getLocationsWithCities = async () => {
 const getVariantNames = async () => {
   const result = await poolAdmin.query(`
     SELECT
-      id AS "variantId",
-      title AS "variantName"
-    FROM public."Variants";
+      V.id AS "variantId",
+      V.title AS "variantName",
+      P.name AS "productName"
+    FROM public."Variants" V
+    JOIN public."Products" P ON V."productId" = P.id;
   `);
-  return result.rows;
+  return result.rows.reduce((acc, row) => {
+    acc[row.variantId] = {
+      variantName: row.variantName,
+      productName: row.productName
+    };
+    return acc;
+  }, {});
 };
 
 // Helper function to enrich results with display names, city names, and variant names, and sort them
@@ -47,11 +56,6 @@ const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
   const locationMap = {};
   locations.forEach((location) => {
     locationMap[location.id] = location;
-  });
-
-  const variantMap = {};
-  variants.forEach((variant) => {
-    variantMap[variant.variantId] = variant.variantName;
   });
 
   const enrichedRows = rows.map((row) => ({
@@ -62,9 +66,8 @@ const enrichWithDisplayNamesAndSort = (rows, locations, variants) => {
     cityName: locationMap[row.locationId]
       ? locationMap[row.locationId].cityName
       : "Unknown",
-    variantName: variantMap[row.variantId]
-      ? variantMap[row.variantId]
-      : "Unknown",
+    variantName: variants[row.variantId] ? variants[row.variantId].variantName : "Unknown",
+    productName: variants[row.variantId] ? variants[row.variantId].productName : "Unknown",
   }));
 
   return enrichedRows.sort((a, b) =>
@@ -86,7 +89,7 @@ router.use(async (req, res, next) => {
 // Endpoint to get inventory at location for a specific date
 router.get("/inventory/location-store-warehouse", async (req, res) => {
   const { date } = req.query;
-  console.log("date")
+
   if (!date) {
     return res.status(400).json({ error: "Date parameter is required" });
   }

@@ -30,17 +30,6 @@ const poolAdmin = new Pool({
 
 const router = express.Router();
 
-const fetchProductNames = async () => {
-  const result = await poolAdmin.query(`
-    SELECT 
-      "id" AS "productId",
-      "name" AS "productName"
-    FROM public."Products"
-  `);
-  // console.log(result.rows)
-  return result.rows;
-};
-
 const fetchLocationInventories = async () => {
   const result = await poolIMS.query(`
     SELECT 
@@ -71,11 +60,13 @@ const fetchScalesData = async () => {
 const fetchVariantWeights = async () => {
   const result = await poolAdmin.query(`
     SELECT
-      id AS "variantId",
-      "unitWeight",
-      title AS "variant_name",
-      "productId"
-    FROM public."Variants"
+      V.id AS "variantId",
+      V."unitWeight",
+      V.title AS "variant_name",
+      V."productId",
+      P.name AS "productName"
+    FROM public."Variants" V
+    JOIN public."Products" P ON V."productId" = P.id
   `);
   return result.rows;
 };
@@ -99,17 +90,12 @@ const calculateDiscrepancy = async () => {
     scalesData,
     variantWeights,
     locationData,
-    productNames,
   ] = await Promise.all([
     fetchLocationInventories(),
     fetchScalesData(),
     fetchVariantWeights(),
     fetchLocationData(),
-    fetchProductNames(),
   ]);
-
-  // console.log("Fetched Variant Weights:", variantWeights);
-  // console.log("Fetched Product Names:", productNames);
 
   const variantWeightMap = variantWeights.reduce((acc, variant) => {
     acc[variant.variantId] = variant;
@@ -131,14 +117,6 @@ const calculateDiscrepancy = async () => {
     return acc;
   }, {});
 
-  const productMap = productNames.reduce((acc, product) => {
-    acc[product.productId] = product.productName;
-    return acc;
-  }, {});
-
-  // console.log("Variant Weight Map:", variantWeightMap);
-  // console.log("Product Map:", productMap);
-
   const discrepancies = locationInventories.map((inventory) => {
     const scale = scalesMap[inventory.variantId];
     const variant = variantWeightMap[inventory.variantId];
@@ -147,7 +125,7 @@ const calculateDiscrepancy = async () => {
     const sensorQuantity = scale ? scale.currentWeight / variant.unitWeight : 0;
     const discrepancy = inventory.ims_quantity - sensorQuantity;
 
-    const productName = variant ? productMap[variant.productId] : "Unknown";
+    const productName = variant ? variant.productName : "Unknown";
     if (productName === "Unknown") {
       console.log(`Missing product name for productId: ${variant ? variant.productId : 'N/A'}`);
     }
@@ -165,7 +143,6 @@ const calculateDiscrepancy = async () => {
     };
   });
 
-  // console.log(discrepancies);
   return discrepancies;
 };
 

@@ -97,6 +97,7 @@ const SalesPerCustomer = () => {
         ...item,
         startDate: startDateString,
         endDate: endDateString,
+        variantAndProductName: ` ${item.productName} - (${item.variantName})`
       }));
       setData(enrichedData);
       setFilteredData(enrichedData);
@@ -241,8 +242,8 @@ const SalesPerCustomer = () => {
     if (dataType === "sku") {
       columns.push(
         {
-          Header: "Variant ID",
-          accessor: "variantId",
+          Header: "Variant",
+          accessor: "variantAndProductName",
           Cell: ({ value }) => (value ? value : "N/A"),
         },
         {

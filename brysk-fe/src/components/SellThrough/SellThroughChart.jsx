@@ -38,7 +38,7 @@ const SellThroughChart = ({ data }) => {
             const item = data[context.dataIndex];
             return [
               `${context.dataset.label}: ${context.raw}`,
-              `Variant Id: ${item.variantId}`,
+              `Variant: ${item.variantAndProductName}`,
               `Received Quantity: ${item.received_qty}`,
               `Sold Quantity: ${item.sold_qty}`
             ];
