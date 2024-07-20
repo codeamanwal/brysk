@@ -103,7 +103,7 @@ const SalesTable = ({ data, timePeriod, dataType }) => {
       columns.push(
         {
           Header: "Variant Name",
-          accessor: "variant_name",
+          accessor: "variantAndProductName",
           Cell: ({ value }) => (value ? value : "N/A"),
         },
         {

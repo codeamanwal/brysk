@@ -1,12 +1,27 @@
 import React from "react";
 import { Bar } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const SalesChart = ({ data, timePeriod, dataType }) => {
-  console.log(data);
-  
+  // console.log(data);
+
   let labels = data.map((item) => item.displayName);
   const tooltips = data.map((item) => {
     if (timePeriod === "month") {
@@ -40,7 +55,9 @@ const SalesChart = ({ data, timePeriod, dataType }) => {
       },
       title: {
         display: true,
-        text: `Sales Per Location/Store (${timePeriod.charAt(0).toUpperCase() + timePeriod.slice(1)})`,
+        text: `Sales Per Location/Store (${
+          timePeriod.charAt(0).toUpperCase() + timePeriod.slice(1)
+        })`,
       },
       tooltip: {
         callbacks: {
@@ -48,8 +65,11 @@ const SalesChart = ({ data, timePeriod, dataType }) => {
             const label = context.dataset.label || "";
             const value = context.raw || 0;
             const tooltipText = tooltips[context.dataIndex];
-            const variantText = dataType === "sku" ? `, Variant: ${data[context.dataIndex].variant_name}` : "";
-            return `${label}: ${value} (${tooltipText}${variantText})`;
+            const variantText =
+              dataType === "sku"
+                ? `, Variant: ${data[context.dataIndex].variantAndProductName}`
+                : "";
+            return [`${label}: ${value}`, `(${tooltipText}${variantText})`];
           },
         },
       },

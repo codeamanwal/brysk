@@ -94,7 +94,9 @@ const SalesPerLocation = () => {
         ...item,
         startDate: startDateString,
         endDate: endDateString,
+        variantAndProductName: ` ${item.productName} - (${item.variant_name})`
       }));
+      console.log(fetchedData)
       setData(fetchedData);
       setFilteredData(fetchedData);
       setFetched(true);
