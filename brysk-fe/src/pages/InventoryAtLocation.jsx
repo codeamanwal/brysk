@@ -19,6 +19,7 @@ const InventoryAtLocation = () => {
   const [startDate, setStartDate] = useState(null);
   const [view, setView] = useState("table");
   const [cityId, setCityId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [locations, setLocations] = useState([]);
 
   const fetchData = async () => {
@@ -33,11 +34,11 @@ const InventoryAtLocation = () => {
 
     try {
       const response = await axios.get(endpoint);
-      console.log(response.data)
+      console.log(response.data);
       const enrichedData = response.data.map((item) => ({
         ...item,
         date: startDateString,
-        variantAndProductName: ` ${item.productName} - (${item.variantName})`
+        variantAndProductName: ` ${item.productName} - (${item.variantName})`,
       }));
       setData(enrichedData);
       setFilteredData(enrichedData);
@@ -65,23 +66,29 @@ const InventoryAtLocation = () => {
   }, []);
 
   useEffect(() => {
-    filterDataByCity(cityId);
-  }, [cityId, data]);
+    filterDataByCityAndLocation(cityId, locationId);
+  }, [cityId, locationId, data]);
 
-  const filterDataByCity = (cityId) => {
-    if (!cityId) {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter((item) => {
+  const filterDataByCityAndLocation = (cityId, locationId) => {
+    let filtered = data;
+    if (cityId) {
+      filtered = filtered.filter((item) => {
         const location = locations.find((loc) => loc.id === item.locationId);
         return location && location.cityId === cityId;
       });
-      setFilteredData(filtered);
     }
+    if (locationId) {
+      filtered = filtered.filter((item) => item.locationId === locationId);
+    }
+    setFilteredData(filtered);
   };
 
   const handleCityChange = (newCityId) => {
     setCityId(newCityId);
+  };
+
+  const handleLocationChange = (newLocationId) => {
+    setLocationId(newLocationId);
   };
 
   const generateColumns = () => [
@@ -213,7 +220,11 @@ const InventoryAtLocation = () => {
                             Fetch Data
                           </button>
                         </label>
-                        <CityFilter onCityChange={handleCityChange} />
+                        <CityFilter
+                          onCityChange={handleCityChange}
+                          onLocationChange={handleLocationChange}
+                          locations={locations}
+                        />
                       </div>
                       {error && (
                         <div

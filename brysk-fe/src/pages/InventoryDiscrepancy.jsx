@@ -3,9 +3,7 @@ import Sidebar from "../components/Sidebar";
 import CityFilter from "../components/CityFilter";
 import axios from "axios";
 import { ThreeDots } from "react-loader-spinner";
-import {
-  DocumentArrowDownIcon,
-} from "@heroicons/react/24/solid";
+import { DocumentArrowDownIcon } from "@heroicons/react/24/solid";
 import { Tooltip } from "react-tooltip";
 import InventoryDiscrepancyTable from "../components/InventoryDiscrepancy/InventoryDiscrepancyTable";
 import InventoryDiscrepancyChart from "../components/InventoryDiscrepancy/InventoryDiscrepancyChart";
@@ -17,6 +15,7 @@ const InventoryDiscrepancy = () => {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState("table");
   const [cityId, setCityId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [locations, setLocations] = useState([]);
   const [fetched, setFetched] = useState(false);
 
@@ -26,8 +25,8 @@ const InventoryDiscrepancy = () => {
   }, []);
 
   useEffect(() => {
-    filterDataByCity(cityId);
-  }, [data, cityId]);
+    filterDataByCityAndLocation(cityId, locationId);
+  }, [data, cityId, locationId]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -36,9 +35,9 @@ const InventoryDiscrepancy = () => {
 
     try {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/inventory-discrepancy`);
-      const transformedData = response.data.map(item => ({
+      const transformedData = response.data.map((item) => ({
         ...item,
-        variantAndProductName: ` ${item.productName} - (${item.variantName})`
+        variantAndProductName: ` ${item.productName} - (${item.variantName})`,
       }));
       setData(transformedData);
       setFilteredData(transformedData);
@@ -60,20 +59,27 @@ const InventoryDiscrepancy = () => {
     }
   };
 
-  const filterDataByCity = (cityId) => {
-    if (!cityId) {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter((item) => {
+  const filterDataByCityAndLocation = (cityId, locationId) => {
+    let filtered = data;
+    if (cityId) {
+      filtered = filtered.filter((item) => {
         const location = locations.find((loc) => loc.id === item.locationId);
         return location && location.cityId === cityId;
       });
-      setFilteredData(filtered);
     }
+    if (locationId) {
+      filtered = filtered.filter((item) => item.locationId === locationId);
+    }
+    setFilteredData(filtered);
   };
 
   const handleCityChange = (newCityId) => {
     setCityId(newCityId);
+    setLocationId(""); // Reset location when city changes
+  };
+
+  const handleLocationChange = (newLocationId) => {
+    setLocationId(newLocationId);
   };
 
   const generateColumns = () => [
@@ -84,23 +90,26 @@ const InventoryDiscrepancy = () => {
     },
     {
       Header: "Variant",
-      accessor: "variantAndProductName" ,
+      accessor: "variantAndProductName",
       Cell: ({ value }) => (value ? value : "N/A"),
     },
     {
       Header: "IMS Quantity",
       accessor: "imsQuantity",
-      Cell: ({ value }) => (value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A"),
+      Cell: ({ value }) =>
+        value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A",
     },
     {
       Header: "Sensor Quantity",
       accessor: "sensorQuantity",
-      Cell: ({ value }) => (value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A"),
+      Cell: ({ value }) =>
+        value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A",
     },
     {
       Header: "Discrepancy",
       accessor: "discrepancy",
-      Cell: ({ value }) => (value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A"),
+      Cell: ({ value }) =>
+        value !== null && value !== undefined ? parseFloat(value).toFixed(3) : "N/A",
     },
   ];
 
@@ -185,7 +194,11 @@ const InventoryDiscrepancy = () => {
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 pb-2">
                     <div className="inline-block min-w-full py-2 align-middle">
                       <div className="my-4 grid lg:grid-cols-3 items-center">
-                        <CityFilter onCityChange={handleCityChange} />
+                        <CityFilter
+                          onCityChange={handleCityChange}
+                          onLocationChange={handleLocationChange}
+                          locations={locations}
+                        />
                       </div>
                       {error && (
                         <div
@@ -199,10 +212,7 @@ const InventoryDiscrepancy = () => {
                                 We encountered an issue while fetching the data. Please try again later.
                               </span>
                             </div>
-                            <button
-                              className="ml-4"
-                              onClick={() => setError(null)}
-                            >
+                            <button className="ml-4" onClick={() => setError(null)}>
                               <svg
                                 className="fill-current h-6 w-6 text-red-500"
                                 role="button"
@@ -210,9 +220,7 @@ const InventoryDiscrepancy = () => {
                                 viewBox="0 0 20 20"
                               >
                                 <title>Close</title>
-                                <path
-                                  d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z"
-                                />
+                                <path d="M14.348 5.652a.5.5 0 00-.707 0L10 9.293 6.354 5.652a.5.5 0 10-.707.707l3.647 3.647-3.647 3.646a.5.5 0 00.707.708L10 10.707l3.646 3.646a.5.5 0 00.707-.707l-3.646-3.646 3.646-3.647a.5.5 0 000-.707z" />
                               </svg>
                             </button>
                           </div>

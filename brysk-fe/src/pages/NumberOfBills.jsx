@@ -21,6 +21,7 @@ const NumberOfBills = () => {
   const [view, setView] = useState("table");
   const [timePeriod, setTimePeriod] = useState("day");
   const [cityId, setCityId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [locations, setLocations] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -35,8 +36,8 @@ const NumberOfBills = () => {
   }, [timePeriod, startDate, endDate]);
 
   useEffect(() => {
-    filterDataByCity(cityId);
-  }, [data, cityId]);
+    filterDataByCityAndLocation(cityId, locationId);
+  }, [data, cityId, locationId]);
 
   const fetchData = async () => {
     if (timePeriod === "date-range" && (!startDate || !endDate)) {
@@ -97,21 +98,27 @@ const NumberOfBills = () => {
     }
   };
 
-  const filterDataByCity = (cityId) => {
-    if (!cityId) {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter((item) => {
+  const filterDataByCityAndLocation = (cityId, locationId) => {
+    let filtered = data;
+    if (cityId) {
+      filtered = filtered.filter((item) => {
         const location = locations.find((loc) => loc.id === item.locationId);
         return location && location.cityId === cityId;
       });
-      setFilteredData(filtered);
     }
+    if (locationId) {
+      filtered = filtered.filter((item) => item.locationId === locationId);
+    }
+    setFilteredData(filtered);
   };
 
   const handleCityChange = (newCityId) => {
     setCityId(newCityId);
-    filterDataByCity(newCityId);
+    setLocationId(""); // Reset location when city changes
+  };
+
+  const handleLocationChange = (newLocationId) => {
+    setLocationId(newLocationId);
   };
 
   const generateColumns = () => {
@@ -310,7 +317,11 @@ const NumberOfBills = () => {
                             <option value="date-range">Date Range</option>
                           </select>
                         </label>
-                        <CityFilter onCityChange={handleCityChange} />
+                        <CityFilter
+                          onCityChange={handleCityChange}
+                          onLocationChange={handleLocationChange}
+                          locations={locations}
+                        />
                         <div></div>
                         {timePeriod === "date-range" && (
                           <div className="mt-4">
@@ -328,7 +339,6 @@ const NumberOfBills = () => {
                             >
                               Fetch Data
                             </button>
-                            
                           </div>
                         )}
                       </div>

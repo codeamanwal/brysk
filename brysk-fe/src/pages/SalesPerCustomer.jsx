@@ -20,6 +20,7 @@ const SalesPerCustomer = () => {
   const [timePeriod, setTimePeriod] = useState("day");
   const [dataType, setDataType] = useState("total");
   const [cityId, setCityId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,8 +32,8 @@ const SalesPerCustomer = () => {
   }, [timePeriod, dataType]);
 
   useEffect(() => {
-    filterDataByCity(cityId);
-  }, [data, cityId]);
+    filterDataByCityAndLocation(cityId, locationId);
+  }, [data, cityId, locationId]);
 
   useEffect(() => {
     filterDataBySearchQuery(searchQuery);
@@ -92,12 +93,11 @@ const SalesPerCustomer = () => {
 
     try {
       const response = await axios.get(endpoint);
-      console.log(response.data)
       const enrichedData = response.data.map((item) => ({
         ...item,
         startDate: startDateString,
         endDate: endDateString,
-        variantAndProductName: ` ${item.productName} - (${item.variantName})`
+        variantAndProductName: ` ${item.productName} - (${item.variantName})`,
       }));
       setData(enrichedData);
       setFilteredData(enrichedData);
@@ -108,6 +108,7 @@ const SalesPerCustomer = () => {
       setLoading(false);
     }
   };
+
   const fetchLocations = async () => {
     try {
       const response = await axios.get(
@@ -119,16 +120,29 @@ const SalesPerCustomer = () => {
     }
   };
 
-  const filterDataByCity = (cityId) => {
-    if (!cityId) {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter((item) => {
+  const filterDataByCityAndLocation = (cityId, locationId) => {
+    let filtered = data;
+    if (cityId) {
+      filtered = filtered.filter((item) => {
         const location = locations.find((loc) => loc.id === item.locationId);
         return location && location.cityId === cityId;
       });
-      setFilteredData(filtered);
     }
+    if (locationId) {
+      filtered = filtered.filter((item) => item.locationId === locationId);
+    }
+    setFilteredData(filtered);
+  };
+
+  const handleCityChange = (newCityId) => {
+    setCityId(newCityId);
+    setLocationId("");
+    filterDataByCityAndLocation(newCityId, "");
+  };
+
+  const handleLocationChange = (newLocationId) => {
+    setLocationId(newLocationId);
+    filterDataByCityAndLocation(cityId, newLocationId);
   };
 
   const filterDataBySearchQuery = (query) => {
@@ -140,11 +154,6 @@ const SalesPerCustomer = () => {
       );
       setFilteredData(filtered);
     }
-  };
-
-  const handleCityChange = (newCityId) => {
-    setCityId(newCityId);
-    filterDataByCity(newCityId);
   };
 
   const generateColumns = () => {
@@ -249,7 +258,8 @@ const SalesPerCustomer = () => {
         {
           Header: "Total Quantity",
           accessor: "total_quantity",
-          Cell: ({ value }) => (value !== undefined ? Number(value).toFixed(3) : "N/A"),
+          Cell: ({ value }) =>
+            value !== undefined ? Number(value).toFixed(3) : "N/A",
         }
       );
     }
@@ -387,7 +397,11 @@ const SalesPerCustomer = () => {
                           </select>
                         </label>
                         <div className="mt-4 lg:mt-0">
-                          <CityFilter onCityChange={handleCityChange} />
+                          <CityFilter
+                            onCityChange={handleCityChange}
+                            onLocationChange={handleLocationChange}
+                            locations={locations}
+                          />
                         </div>
                         {timePeriod === "date-range" && (
                           <div className="mt-4">
@@ -486,7 +500,11 @@ const SalesPerCustomer = () => {
                           filteredData={filteredData}
                         />
                       ) : (
-                        <SalesPerCustomerChart data={filteredData} timePeriod={timePeriod} dataType={dataType}/>
+                        <SalesPerCustomerChart
+                          data={filteredData}
+                          timePeriod={timePeriod}
+                          dataType={dataType}
+                        />
                       )}
                     </div>
                   </div>

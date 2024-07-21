@@ -18,6 +18,7 @@ const SalesPerLocation = () => {
   const [timePeriod, setTimePeriod] = useState("day");
   const [dataType, setDataType] = useState("total");
   const [cityId, setCityId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [locations, setLocations] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -31,8 +32,8 @@ const SalesPerLocation = () => {
   }, [timePeriod, dataType]);
 
   useEffect(() => {
-    filterDataByCity(cityId);
-  }, [data, cityId]);
+    filterDataByCityAndLocation(cityId, locationId);
+  }, [data, cityId, locationId]);
 
   const fetchData = async () => {
     if (timePeriod === "date-range" && (!startDate || !endDate)) {
@@ -96,7 +97,6 @@ const SalesPerLocation = () => {
         endDate: endDateString,
         variantAndProductName: ` ${item.productName} - (${item.variant_name})`
       }));
-      console.log(fetchedData)
       setData(fetchedData);
       setFilteredData(fetchedData);
       setFetched(true);
@@ -119,21 +119,29 @@ const SalesPerLocation = () => {
     }
   };
 
-  const filterDataByCity = (cityId) => {
-    if (!cityId) {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter((item) => {
+  const filterDataByCityAndLocation = (cityId, locationId) => {
+    let filtered = data;
+    if (cityId) {
+      filtered = filtered.filter((item) => {
         const location = locations.find((loc) => loc.id === item.locationId);
         return location && location.cityId === cityId;
       });
-      setFilteredData(filtered);
     }
+    if (locationId) {
+      filtered = filtered.filter((item) => item.locationId === locationId);
+    }
+    setFilteredData(filtered);
   };
 
   const handleCityChange = (newCityId) => {
     setCityId(newCityId);
-    filterDataByCity(newCityId);
+    setLocationId("");
+    filterDataByCityAndLocation(newCityId, "");
+  };
+
+  const handleLocationChange = (newLocationId) => {
+    setLocationId(newLocationId);
+    filterDataByCityAndLocation(cityId, newLocationId);
   };
 
   const downloadCSV = () => {
@@ -236,7 +244,11 @@ const SalesPerLocation = () => {
                             <option value="sku">SKU wise</option>
                           </select>
                         </label>
-                        <CityFilter onCityChange={handleCityChange} />
+                        <CityFilter 
+                          onCityChange={handleCityChange} 
+                          onLocationChange={handleLocationChange} 
+                          locations={locations} 
+                        />
                         {timePeriod === "date-range" && (
                           <div className="mt-4">
                             <DatePickerRange

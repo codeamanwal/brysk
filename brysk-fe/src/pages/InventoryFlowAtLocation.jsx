@@ -19,6 +19,7 @@ const InventoryFlowAtLocation = () => {
   const [endDate, setEndDate] = useState(null);
   const [fetched, setFetched] = useState(false);
   const [cityId, setCityId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [locations, setLocations] = useState([]);
 
   const fetchData = async () => {
@@ -32,14 +33,13 @@ const InventoryFlowAtLocation = () => {
       const response = await axios.get(
         `${process.env.REACT_APP_BACKEND_URL}/inventoryflow?start_date=${startDateString}&end_date=${endDateString}`
       );
-      const transformedData = response.data.map(item => ({
+      const transformedData = response.data.map((item) => ({
         ...item,
-        variantAndProductName: ` ${item.productName} - (${item.variantName})`
+        variantAndProductName: ` ${item.productName} - (${item.variantName})`,
       }));
       setData(transformedData);
       setFilteredData(transformedData);
       setFetched(true);
-      console.log("dataFlow", response.data);
     } catch (error) {
       setError(error);
       console.error(error);
@@ -53,8 +53,8 @@ const InventoryFlowAtLocation = () => {
   }, []);
 
   useEffect(() => {
-    filterDataByCity(cityId);
-  }, [cityId, data]);
+    filterDataByCityAndLocation(cityId, locationId);
+  }, [cityId, locationId, data]);
 
   const fetchLocations = async () => {
     try {
@@ -67,20 +67,26 @@ const InventoryFlowAtLocation = () => {
     }
   };
 
-  const filterDataByCity = (cityId) => {
-    if (!cityId) {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter((item) => {
+  const filterDataByCityAndLocation = (cityId, locationId) => {
+    let filtered = data;
+    if (cityId) {
+      filtered = filtered.filter((item) => {
         const location = locations.find((loc) => loc.id === item.locationId);
         return location && location.cityId === cityId;
       });
-      setFilteredData(filtered);
     }
+    if (locationId) {
+      filtered = filtered.filter((item) => item.locationId === locationId);
+    }
+    setFilteredData(filtered);
   };
 
   const handleCityChange = (newCityId) => {
     setCityId(newCityId);
+  };
+
+  const handleLocationChange = (newLocationId) => {
+    setLocationId(newLocationId);
   };
 
   const downloadCSV = () => {
@@ -242,8 +248,11 @@ const InventoryFlowAtLocation = () => {
                             Fetch Data
                           </button>
                         </div>
-                        <div></div>
-                        <CityFilter onCityChange={handleCityChange} />
+                        <CityFilter
+                          onCityChange={handleCityChange}
+                          onLocationChange={handleLocationChange}
+                          locations={locations}
+                        />
                       </div>
                       {!fetched && !loading && (
                         <div className="flex justify-between items-start">

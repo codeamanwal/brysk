@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
 import CityFilter from "../components/CityFilter";
 import axios from "axios";
@@ -20,6 +20,8 @@ const SellThroughPage = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [fetched, setFetched] = useState(false);
+  const [cityId, setCityId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: "sell_through_rate",
     direction: "descending",
@@ -71,20 +73,29 @@ const SellThroughPage = () => {
     }
   };
 
-  const filterDataByCity = (cityId) => {
-    if (!cityId) {
-      setFilteredData(data);
-    } else {
-      const filtered = data.filter((item) => {
+  const filterDataByCityAndLocation = (cityId, locationId) => {
+    let filtered = data;
+    if (cityId) {
+      filtered = filtered.filter((item) => {
         const location = locations.find((loc) => loc.id === item.locationId);
         return location && location.cityId === cityId;
       });
-      setFilteredData(filtered);
     }
+    if (locationId) {
+      filtered = filtered.filter((item) => item.locationId === locationId);
+    }
+    setFilteredData(filtered);
   };
 
   const handleCityChange = (newCityId) => {
-    filterDataByCity(newCityId);
+    setCityId(newCityId);
+    setLocationId(""); // Reset location when city changes
+    filterDataByCityAndLocation(newCityId, "");
+  };
+
+  const handleLocationChange = (newLocationId) => {
+    setLocationId(newLocationId);
+    filterDataByCityAndLocation(cityId, newLocationId);
   };
 
   const handleStartDateChange = (date) => {
@@ -103,7 +114,7 @@ const SellThroughPage = () => {
     setSortConfig({ key, direction });
   };
 
-  const sortedData = React.useMemo(() => {
+  const sortedData = useMemo(() => {
     if (!sortConfig.key) return filteredData;
 
     const sorted = [...filteredData].sort((a, b) => {
@@ -150,7 +161,7 @@ const SellThroughPage = () => {
     },
   ];
 
-  const columns = React.useMemo(generateColumns, []);
+  const columns = useMemo(generateColumns, []);
 
   const {
     getTableProps,
@@ -274,7 +285,11 @@ const SellThroughPage = () => {
                           </button>
                         </div>
                         <div></div>
-                        <CityFilter onCityChange={handleCityChange} />
+                        <CityFilter
+                          onCityChange={handleCityChange}
+                          onLocationChange={handleLocationChange}
+                          locations={locations}
+                        />
                       </div>
                       {!fetched && !loading && (
                         <div className="flex justify-between items-start mt-3">
