@@ -248,6 +248,7 @@ const InventoryFlowAtLocation = () => {
                             Fetch Data
                           </button>
                         </div>
+                        <div></div>
                         <CityFilter
                           onCityChange={handleCityChange}
                           onLocationChange={handleLocationChange}
