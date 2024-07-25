@@ -29,26 +29,31 @@ const InventoryDiscrepancy = () => {
   }, [data, cityId, locationId]);
 
   const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    setFetched(false);
+  setLoading(true);
+  setError(null);
+  setFetched(false);
 
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/inventory-discrepancy`);
-      const transformedData = response.data.map((item) => ({
+  try {
+    const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/inventory-discrepancy`);
+    const transformedData = response.data
+      .map((item) => ({
         ...item,
         variantAndProductName: ` ${item.productName} - (${item.variantName})`,
-      }));
-      setData(transformedData);
-      setFilteredData(transformedData);
-      setFetched(true);
-    } catch (error) {
-      setError("Failed to fetch discrepancies");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        discrepancy: parseFloat(item.discrepancy), // Convert discrepancy to number
+      }))
+      .sort((a, b) => a.discrepancy - b.discrepancy); // Sort by discrepancy
+
+    setData(transformedData);
+    setFilteredData(transformedData);
+    setFetched(true);
+  } catch (error) {
+    setError("Failed to fetch discrepancies");
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchLocations = async () => {
     try {
